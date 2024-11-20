@@ -11,6 +11,6 @@ class Customer extends Model
     use HasFactory;
 
     public function Invoice() {
-        return $this->belongsTo(Invoice::class);
+        return $this->hasMany(Invoice::class);
     }
 }
