@@ -18,7 +18,7 @@ return new class extends Migration
             $table->date('due_date')->nullable();
             $table->string('email_reciver');
             $table->boolean('is_dollar')->default('0');
-            $table->integer('dollar')->nullable();
+            $table->integer('current_dollar')->nullable();
             $table->timestamps();
         });
     }

@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('description');
             $table->integer('quantity');
-            $table->integer('rupiah');
-            $table->integer('dollar')->nullable();
+            $table->integer('price_rupiah');
+            $table->integer('price_dollar')->nullable();
             $table->integer('amount_rupiah');
             $table->integer('amount_dollar')->nullable();
             $table->timestamps();
