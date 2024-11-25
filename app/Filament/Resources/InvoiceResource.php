@@ -4,9 +4,11 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Filament\Resources\InvoiceResource\RelationManagers;
+use App\Models\Companies;
 use App\Models\Invoice;
 use App\Models\Item;
 use App\Models\Usd;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
@@ -17,6 +19,7 @@ use Filament\Forms\Form;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -135,6 +138,27 @@ class InvoiceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Action::make('generate_pdf')
+                ->label('Generate PDF')
+                ->action(function (Invoice $record){
+                    //rubah format ke UTF 8
+                    $record->customer->nama = mb_convert_encoding($record->customer->nama, 'UTF-8', 'auto');
+                    $record->item->each(function($item){
+                        $item->description = mb_convert_encoding($item->description, 'UTF-8', 'auto');
+                    });
+
+                    //generate pdf
+                    $pdf = Pdf::loadView('invoices.pdf', ['invoice' => $record, 'company' => Companies::find(1)]);
+
+                    //download pdf
+                    return response()->stream(function()use($pdf){
+                        echo $pdf->output();
+                    }, 200, [
+                        'Content-Type' => 'application/pdf',
+                        'Content-Disposition' => 'attachment; filename="invoice_'.$record->customer->id .'.pdf"'
+                    ]);
+                })
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
