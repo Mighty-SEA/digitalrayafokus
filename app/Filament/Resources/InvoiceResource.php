@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Filament\Resources\InvoiceResource\RelationManagers;
+use App\Mail\InvoiceMail;
 use App\Models\Companies;
 use App\Models\Invoice;
 use App\Models\Item;
@@ -26,6 +27,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 use function Laravel\Prompts\select;
 
@@ -77,7 +80,7 @@ class InvoiceResource extends Resource
                     ->schema([
                         Repeater::make('items')
                         ->relationship('item')
-                        ->schema([
+                        ->schema([  
                             TextInput::make('name')->live(),
                             TextInput::make('description'),
                             TextInput::make('quantity')
@@ -122,6 +125,8 @@ class InvoiceResource extends Resource
                             
                                 ])->columnSpan(5)->columns(7)
                     ])
+
+                    
         ]);
 
 
@@ -167,7 +172,45 @@ class InvoiceResource extends Resource
                         'Content-Type' => 'application/pdf',
                         'Content-Disposition' => 'attachment; filename="invoice_'.$record->customer->id .'.pdf"'
                     ]);
-                })
+                }),
+
+                Action::make('send_invoice')
+                ->label('Send Invoice')
+                ->action(function (Invoice $record) {
+                    // Generate PDF
+                    $pdf = Pdf::loadView('invoices.pdf', ['invoice' => $record, 'company' => Companies::find(1)])
+                              ->setOption('isHtml5ParserEnabled', true)
+                              ->setOption('isPhpEnabled', true)
+                              ->setOption('defaultFont', 'DejaVu Sans');
+            
+                    $pdfPath = storage_path('app/invoices/invoice_' . $record->customer->nama . '.pdf');
+                    $pdf->save($pdfPath);
+            
+                    // Check if PDF was saved
+                    if (!file_exists($pdfPath)) {
+                        Log::error('PDF was not saved at ' . $pdfPath);
+                        return \Filament\Notifications\Notification::make()
+                            ->title('Error')
+                            ->body('Failed to generate PDF.')
+                            ->danger();
+                    }
+            
+                    // Send email
+                    try {
+                        Mail::to($record->customer->email)->send(new InvoiceMail($record));
+                        return \Filament\Notifications\Notification::make()
+                            ->title('Invoice Sent')
+                            ->body('The invoice has been successfully sent to ' . $record->customer->email)
+                            ->success();
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send invoice: ' . $e->getMessage());
+                        return \Filament\Notifications\Notification::make()
+                            ->title('Error Sending Invoice')
+                            ->body('There was an error sending the invoice: ' . $e->getMessage())
+                            ->danger();
+                    }
+                }),
+
 
             ])
             ->bulkActions([
