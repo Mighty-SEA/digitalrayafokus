@@ -23,6 +23,7 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
+            ->brandName('PT Digital Raya Fokus')
             ->default()
             ->id('admin')
             ->path('admin')
@@ -55,5 +56,6 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->databaseNotifications();
+            
     }
 }

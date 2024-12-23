@@ -29,6 +29,9 @@ class InvoicesSeeder extends Seeder
             ]);
         };
 
+
+
+        
         foreach (range(1, 150) as $index) {
             DB::table('items')->insert([
                 'invoice_id' => $faker->numberBetween(1, 50), // Sesuaikan dengan range id invoice
