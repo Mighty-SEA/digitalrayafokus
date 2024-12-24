@@ -24,6 +24,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,6 +32,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use ZipArchive;
 
 use function Laravel\Prompts\select;
 
@@ -131,8 +133,7 @@ class InvoiceResource extends Resource
                             }),
                         TextInput::make("price_dollar") // Automatically calculated
                             ->label("harga dalam dolar"),
-                        TextInput::make("amount_rupiah") // Automatically calculated
-                            ->disabled(),
+                        TextInput::make("amount_rupiah"), // Automatically calculated
                         TextInput::make("amount_dollar"), // Assuming you want this to be calculated or entered manually
                     ])
                     ->columnSpan(5)
@@ -145,28 +146,63 @@ class InvoiceResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make("customer.nama"),
-                TextColumn::make("item.name"),
-                TextColumn::make("item.amount_rupiah")->description(function (
-                    Invoice $record
-                ): string {
-                    // Access the first related item to fetch the amount_dollar
-                    $item = $record->item()->first(); // Get the first related item
-                    // Ensure the description returns a string even when amount_dollar is null
-                    return $item && $item->amount_dollar !== null
-                        ? (string) $item->amount_dollar
-                        : ""; // Return an empty string if no amount_dollar
-                }),
+                TextColumn::make("customer.nama")
+                    ->label("Customer Name")
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make("invoice_date")
+                    ->label("Invoice Date")
+                    ->date()
+                    ->sortable(),
+                TextColumn::make("item.name")
+                    ->label("Item")
+                    ->searchable()
+                    ->sortable(
+                        query: function (
+                            Builder $query,
+                            string $direction
+                        ): Builder {
+                            return $query->orderByRaw(
+                                "(SELECT GROUP_CONCAT(name) FROM items WHERE items.invoice_id = invoices.id) " .
+                                    $direction
+                            );
+                        }
+                    ),
+                TextColumn::make("item.amount_rupiah")
+                    ->label("Amount (IDR/USD)")
+                    ->description(function (Invoice $record): string {
+                        $total_dollar = $record->item()->sum("amount_dollar");
+                        return $total_dollar > 0
+                            ? "$ " . number_format($total_dollar, 2)
+                            : "";
+                    })
+                    ->formatStateUsing(function ($state, Invoice $record) {
+                        $total_rupiah = $record->item()->sum("amount_rupiah");
+                        return "Rp. " .
+                            number_format($total_rupiah, 0, ",", ".");
+                    })
+                    ->sortable(
+                        query: function (
+                            Builder $query,
+                            string $direction
+                        ): Builder {
+                            return $query->orderByRaw(
+                                "(SELECT SUM(amount_rupiah) FROM items WHERE items.invoice_id = invoices.id) " .
+                                    $direction
+                            );
+                        }
+                    ),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->icon("heroicon-o-pencil"),
                 Action::make("generate_pdf")
                     ->label("Generate PDF")
+                    ->icon("heroicon-o-document")
+                    ->color("success")
                     ->action(function (Invoice $record) {
-                        //rubah format ke UTF 8
                         $record->customer->nama = mb_convert_encoding(
                             $record->customer->nama,
                             "UTF-8",
@@ -180,13 +216,11 @@ class InvoiceResource extends Resource
                             );
                         });
 
-                        //generate pdf
                         $pdf = Pdf::loadView("invoices.pdf", [
                             "invoice" => $record,
                             "company" => Companies::find(1),
                         ]);
 
-                        //download pdf
                         return response()->stream(
                             function () use ($pdf) {
                                 echo $pdf->output();
@@ -200,18 +234,20 @@ class InvoiceResource extends Resource
                                     '.pdf"',
                             ],
                             Notification::make()
-                            ->title("PDF Generated")
-                            ->body("The PDF has been generated successfully.")
-                            ->success()
-                            ->sendToDatabase(Auth::user())
-                            ->send()
+                                ->title("PDF Generated")
+                                ->body(
+                                    "The PDF has been generated successfully."
+                                )
+                                ->success()
+                                ->sendToDatabase(Auth::user())
+                                ->send()
                         );
                     }),
-
-                    Action::make("send_invoice")
+                Action::make("send_invoice")
                     ->label("Send Invoice")
+                    ->icon("heroicon-o-paper-airplane")
+                    ->color("primary")
                     ->action(function (Invoice $record) {
-                        // Generate PDF
                         $pdf = Pdf::loadView("invoices.pdf", [
                             "invoice" => $record,
                             "company" => Companies::find(1),
@@ -219,15 +255,14 @@ class InvoiceResource extends Resource
                             ->setOption("isHtml5ParserEnabled", true)
                             ->setOption("isPhpEnabled", true)
                             ->setOption("defaultFont", "DejaVu Sans");
-    
+
                         $pdfPath = storage_path(
                             "app/invoices/invoice_" .
                                 $record->customer->nama .
                                 ".pdf"
                         );
                         $pdf->save($pdfPath);
-    
-                        // Check if PDF was saved
+
                         if (!file_exists($pdfPath)) {
                             Log::error("PDF was not saved at " . $pdfPath);
                             return Notification::make()
@@ -236,14 +271,12 @@ class InvoiceResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-    
-                        // Send email
+
                         try {
                             Mail::to($record->customer->email)->send(
                                 new InvoiceMail($record)
                             );
-    
-                            // Send Notification
+
                             return Notification::make()
                                 ->title("Invoice Sent")
                                 ->body(
@@ -272,11 +305,120 @@ class InvoiceResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    
-                ])
+                    Tables\Actions\BulkActionGroup::make([]),
+                    Tables\Actions\DeleteBulkAction::make()->icon(
+                        "heroicon-o-trash"
+                    ),
+                    BulkAction::make("generate_multiple_pdfs")
+                        ->label("Generate PDFs")
+                        ->icon("heroicon-o-document-duplicate")
+                        ->color("success")
+                        ->action(function ($records) {
+                            $zip = new ZipArchive();
+                            $zipFileName = storage_path(
+                                "app/bulk_invoices.zip"
+                            );
+
+                            if (
+                                $zip->open(
+                                    $zipFileName,
+                                    ZipArchive::CREATE | ZipArchive::OVERWRITE
+                                ) === true
+                            ) {
+                                foreach ($records as $record) {
+                                    $record->customer->nama = mb_convert_encoding(
+                                        $record->customer->nama,
+                                        "UTF-8",
+                                        "auto"
+                                    );
+                                    $record->item->each(function ($item) {
+                                        $item->description = mb_convert_encoding(
+                                            $item->description,
+                                            "UTF-8",
+                                            "auto"
+                                        );
+                                    });
+
+                                    $pdf = Pdf::loadView("invoices.pdf", [
+                                        "invoice" => $record,
+                                        "company" => Companies::find(1),
+                                    ]);
+
+                                    $pdfContent = $pdf->output();
+                                    $zip->addFromString(
+                                        "invoice_{$record->id}.pdf",
+                                        $pdfContent
+                                    );
+                                }
+                                $zip->close();
+
+                                return response()
+                                    ->download($zipFileName)
+                                    ->deleteFileAfterSend();
+                            }
+
+                            return Notification::make()
+                                ->title("Error")
+                                ->body("Failed to create ZIP file")
+                                ->danger()
+                                ->send();
+                        }),
+                    BulkAction::make("send_multiple_invoices")
+                        ->label("Send Invoices")
+                        ->icon("heroicon-o-paper-airplane")
+                        ->color("primary")
+                        ->action(function ($records) {
+                            $successCount = 0;
+                            $failCount = 0;
+
+                            foreach ($records as $record) {
+                                try {
+                                    $pdf = Pdf::loadView("invoices.pdf", [
+                                        "invoice" => $record,
+                                        "company" => Companies::find(1),
+                                    ])
+                                        ->setOption(
+                                            "isHtml5ParserEnabled",
+                                            true
+                                        )
+                                        ->setOption("isPhpEnabled", true)
+                                        ->setOption(
+                                            "defaultFont",
+                                            "DejaVu Sans"
+                                        );
+
+                                    $pdfPath = storage_path(
+                                        "app/invoices/invoice_" .
+                                            $record->customer->nama .
+                                            ".pdf"
+                                    );
+                                    $pdf->save($pdfPath);
+
+                                    Mail::to($record->customer->email)->send(
+                                        new InvoiceMail($record)
+                                    );
+
+                                    $successCount++;
+                                } catch (\Exception $e) {
+                                    Log::error(
+                                        "Failed to send invoice: " .
+                                            $e->getMessage()
+                                    );
+                                    $failCount++;
+                                }
+                            }
+
+                            return Notification::make()
+                                ->title("Bulk Invoice Sending Complete")
+                                ->body(
+                                    "Successfully sent {$successCount} invoices, {$failCount} failed."
+                                )
+                                ->success()
+                                ->sendToDatabase(Auth::user())
+                                ->send();
+                        }),
+                ]),
             ]);
-            
     }
 
     public static function getRelations(): array

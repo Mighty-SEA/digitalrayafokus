@@ -100,39 +100,50 @@
             <div class="invoice-details">
                 <div class="invoice-number">Invoice #{{ $invoice->id }}</div>
                 <div class="invoice-date">Date: {{ $invoice->invoice_date}}</div>
+                <div class="invoice-date">Due Date: {{ $invoice->due_date}}</div>
             </div>
         </div>
         <div class="invoice-to">
             <div class="title">Bill To:</div>
             <div>{{ $invoice->customer->nama }}</div>
+            <div>{{ $invoice->customer->email }}</div>
+            <div>{{ $invoice->customer->phone }}</div>
         </div>
         <div class="invoice-from">
             <div class="title">From:</div>
-            <div>My Company</div>
-            <div>456 Another St</div>
-            <div>City, State, ZIP</div>
+            <div>{{ $company->name }}</div>
+            <div>{{ $company->address }}</div>
+            <div>{{ $company->phone }}</div>
+            <div>{{ $company->email }}</div>
         </div>
         <table>
             <thead>
                 <tr>
                     <th>Description</th>
                     <th>Quantity</th>
-                    <th>Price</th>
-                    <th>Total</th>
+                    <th>Price (IDR)</th>
+                    <th>Price (USD)</th>
+                    <th>Total (IDR)</th>
+                    <th>Total (USD)</th>
                 </tr>
             </thead>
             <tbody>
-              @foreach($invoice->item as $item)
-              <tr>
-                  <td>{{ $item->name }}</td>
-                  <td>{{ $item->quantity }}</td>
-                  <td>RP {{ number_format($item->price_rupiah, 0, ',', '.') }}</td>
-                  <td>RP {{ number_format($item->quantity * $item->price_rupiah, 0, ',', '.') }}</td>
-              </tr>
-          @endforeach
+            @foreach($invoice->item as $item)
+            <tr>
+                <td>{{ $item->name }}</td>
+                <td>{{ $item->quantity }}</td>
+                <td>Rp {{ number_format($item->price_rupiah, 0, ',', '.') }}</td>
+                <td>$ {{ number_format($item->price_dollar, 2, '.', ',') }}</td>
+                <td>Rp {{ number_format($item->amount_rupiah, 0, ',', '.') }}</td>
+                <td>$ {{ number_format($item->amount_dollar, 2, '.', ',') }}</td>
+            </tr>
+            @endforeach
             </tbody>
         </table>
-        <div class="total">Total: $35.00</div>
+        <div class="total">
+            Total IDR: Rp {{ number_format($invoice->item->sum('amount_rupiah'), 0, ',', '.') }}<br>
+            Total USD: $ {{ number_format($invoice->item->sum('amount_dollar'), 2, '.', ',') }}
+        </div>
         <div class="footer">Thank you for your business!</div>
     </div>
 </body>
