@@ -7,6 +7,10 @@
 <title>Invoice</title>
 
 <style>
+body {
+  background-color: #f6f6f6;
+}
+
 .container {
   width: 100%;
   padding: 20px;
@@ -16,12 +20,14 @@
   max-width: 800px;
   margin: auto;
   padding: 30px;
-  border: 1px solid #eee;
-  box-shadow: 0 0 10px rgba(0, 0, 0, .15);
+  border: 1px solid #ddd;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   font-size: 16px;
   line-height: 24px;
-  font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
-  color: #555;
+  font-family: 'Helvetica Neue', 'Helvetica', Arial, sans-serif;
+  color: #444;
+  background-color: white;
+  border-radius: 8px;
 }
 
 .invoice-box table {
@@ -48,9 +54,12 @@
 }
 
 .invoice-box table tr.heading td {
-  background: #eee;
+  background: #3498db;
+  color: white;
   border-bottom: 1px solid #ddd;
   font-weight: bold;
+  padding: 10px;
+  border-radius: 4px;
 }
 
 .invoice-box table tr.details td {
@@ -59,6 +68,11 @@
 
 .invoice-box table tr.item td {
   border-bottom: 1px solid #eee;
+  padding: 10px 5px;
+}
+
+.invoice-box table tr.item:hover {
+  background: #fafafa;
 }
 
 .invoice-box table tr.item.last td {
@@ -66,8 +80,24 @@
 }
 
 .invoice-box table tr.total td:nth-child(2) {
-  border-top: 2px solid #eee;
+  border-top: 2px solid #3498db;
   font-weight: bold;
+  color: #3498db;
+  font-size: 18px;
+}
+
+h2 {
+  color: #3498db;
+  margin: 0 0 10px;
+}
+
+h3 {
+  color: #2c3e50;
+  margin: 0 0 10px;
+}
+
+small {
+  color: #7f8c8d;
 }
 
 @media only screen and (max-width: 600px) {

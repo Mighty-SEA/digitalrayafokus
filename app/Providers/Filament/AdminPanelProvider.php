@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -40,14 +41,11 @@ class AdminPanelProvider extends PanelProvider
                 for: "App\\Filament\\Pages"
             )
             ->pages([Pages\Dashboard::class])
-            ->discoverWidgets(
-                in: app_path("Filament/Widgets"),
-                for: "App\\Filament\\Widgets"
-            )
-            ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
-            ])
+            // ->discoverWidgets(
+            //     in: app_path("Filament/Widgets"),
+            //     for: "App\\Filament\\Widgets"
+            // )
+            ->widgets([\App\Filament\Widgets\StatsOverview::class])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -58,8 +56,19 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                \Hasnayeen\Themes\Http\Middleware\SetTheme::class
             ])
             ->authMiddleware([Authenticate::class])
-            ->databaseNotifications();
+            ->databaseNotifications()
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label("Github")
+                    ->icon("heroicon-o-code-bracket")
+                    ->url("https://github.com/rehanrosyidi", true),
+            ])
+            ->plugin(
+                \Hasnayeen\Themes\ThemesPlugin::make()
+            )
+            ->sidebarCollapsibleOnDesktop();
     }
 }
