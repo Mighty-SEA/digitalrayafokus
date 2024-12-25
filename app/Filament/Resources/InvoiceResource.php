@@ -33,6 +33,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use ZipArchive;
+use Filament\Forms\Components\Actions\Action as FormAction;
+use Illuminate\Support\Facades\Http;
 
 use function Laravel\Prompts\select;
 
@@ -44,101 +46,205 @@ class InvoiceResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Section::make()
+            Section::make("Invoice Details")
+                ->description("Enter invoice information")
+                ->icon("heroicon-o-document-text")
                 ->schema([
                     Select::make("customer_id")
                         ->relationship("customer", "nama")
                         ->createOptionForm([
-                            TextInput::make("nama"),
-                            TextInput::make("email"),
-                            TextInput::make("phone"),
+                            TextInput::make("nama")->required(),
+                            TextInput::make("email")->email()->required(),
+                            TextInput::make("phone")->tel()->required(),
                         ])
-                        ->searchable(),
+                        ->searchable()
+                        ->preload()
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $customer = \App\Models\Customer::find($state);
+                            if ($customer) {
+                                $set("email_reciver", $customer->email);
+                            }
+                        })
+                        ->columnSpan(2),
                     TextInput::make("email_reciver")
                         ->live(onBlur: true)
-
-                        ->label("email penerima"),
-                    DatePicker::make("invoice_date")->default(now()),
-                    DatePicker::make("due_date"),
+                        ->placeholder(function ($get) {
+                            $customer = \App\Models\Customer::find(
+                                $get("customer_id")
+                            );
+                            return $customer ? $customer->email : "";
+                        })
+                        ->label("Email Penerima")
+                        ->email()
+                        ->required()
+                        ->columnSpan(2),
+                    DatePicker::make("invoice_date")
+                        ->default(now())
+                        ->required()
+                        ->displayFormat("d/m/Y")
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $dueDate = \Carbon\Carbon::parse($state)->addDays(
+                                7
+                            );
+                            $set("due_date", $dueDate);
+                        }),
+                    DatePicker::make("due_date")
+                        ->required()
+                        ->displayFormat("d/m/Y")
+                        ->minDate(now())
+                        ->default(now()->addDays(7)),
                     TextInput::make("current_dollar")
-                        ->label("dolar saat ini")
+                        ->label("Kurs USD")
+                        ->prefix('$')
+                        ->numeric()
                         ->default(Usd::find(1)->dollar)
                         ->afterStateHydrated(function (callable $set) {
-                            $usd = Usd::find(1); // Fetch the dollar value from the database
+                            $usd = Usd::find(1);
                             if ($usd) {
-                                $set("current_dollar", $usd->dollar); // Set the form field with the dollar value
+                                $set("current_dollar", $usd->dollar);
                             }
                         })
                         ->live(onBlur: true)
+                        ->required()
                         ->afterStateUpdated(function (callable $set, $state) {
-                            // Sync the current dollar value back to the Usd model whenever it changes
-                            $usd = Usd::find(1); // Assuming you only have one row for USD exchange rate
+                            $usd = Usd::find(1);
                             if ($usd) {
-                                $usd->dollar = $state; // Update the dollar value in the Usd model
-                                $usd->save(); // Save the new value
+                                $usd->dollar = $state;
+                                $usd->save();
                             }
-                        }),
+                        })
+                        ->suffixAction(
+                            FormAction::make("fetch_kurs")
+                                ->icon("heroicon-m-arrow-path")
+                                ->action(function (callable $set) {
+                                    $response = Http::get(
+                                        "https://v6.exchangerate-api.com/v6/08350a93548cd0baa01331b9/latest/USD"
+                                    );
+
+                                    if ($response->successful()) {
+                                        $data = $response->json();
+                                        $rate =
+                                            $data["conversion_rates"]["IDR"];
+
+                                        $usd = Usd::find(1);
+                                        $usd->dollar = $rate;
+                                        $usd->save();
+
+                                        $set("current_dollar", $rate);
+
+                                        Notification::make()
+                                            ->title("Kurs Updated")
+                                            ->success()
+                                            ->send();
+                                    }
+                                })
+                        ),
                 ])
-                ->columns(5),
-            Section::make()->schema([
-                Repeater::make("items")
-                    ->relationship("item")
-                    ->schema([
-                        TextInput::make("name")->live(),
-                        TextInput::make("description"),
-                        TextInput::make("quantity")
-                            ->default(1)
-                            ->live(onBlur: true)
-                            ->numeric()
-                            ->minValue(1)
-                            ->afterStateUpdated(function (
-                                callable $set,
-                                $state,
-                                $get
-                            ) {
-                                // Calculate amount_rupiah based on quantity and price_rupiah
-                                $priceRupiah = $get("price_rupiah");
-                                $set("amount_rupiah", $priceRupiah * $state); // quantity * price_rupiah
-                            }),
-                        TextInput::make("price_rupiah")
-                            ->label("harga dalam rupiah")
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function (
-                                callable $set,
-                                $state,
-                                $get
-                            ) {
-                                // Get the current dollar value from the Usd model (assuming one record with id=1)
-                                $usd = Usd::find(1); // Fetch the exchange rate from the USD table
+                ->columns(6),
 
-                                // Ensure the exchange rate exists
-                                if ($usd && $usd->dollar != 0) {
-                                    // Calculate price_dollar as price_rupiah * usd->dollar
-                                    $set("price_dollar", $state / $usd->dollar); // Multiply price_rupiah by the exchange rate
-                                } else {
-                                    // Handle the case where the exchange rate is 0 or not found
-                                    $set("price_dollar", 0); // Set to 0 if exchange rate is invalid
-                                }
-
-                                // Calculate amount_rupiah based on price_rupiah and quantity
-                                $quantity = $get("quantity");
-                                $set("amount_rupiah", $state * $quantity); // Multiply price_rupiah by quantity
-
-                                // Calculate amount_dollar as amount_rupiah / usd->dollar
-                                $amountRupiah = $state * $quantity; // amount_rupiah is price_rupiah * quantity
-                                $set(
-                                    "amount_dollar",
-                                    $amountRupiah / $usd->dollar
-                                ); // Divide amount_rupiah by the exchange rate to get amount_dollar
-                            }),
-                        TextInput::make("price_dollar") // Automatically calculated
-                            ->label("harga dalam dolar"),
-                        TextInput::make("amount_rupiah"), // Automatically calculated
-                        TextInput::make("amount_dollar"), // Assuming you want this to be calculated or entered manually
-                    ])
-                    ->columnSpan(5)
-                    ->columns(7),
-            ]),
+            Section::make("Items")
+                ->description("Add invoice items")
+                ->icon("heroicon-o-shopping-cart")
+                ->schema([
+                    Repeater::make("items")
+                        ->relationship("item")
+                        ->schema([
+                            TextInput::make("name")
+                                ->required()
+                                ->live()
+                                ->columnSpan(2),
+                            TextInput::make("description")->columnSpan(2),
+                            TextInput::make("quantity")
+                                ->default(1)
+                                ->live(onBlur: true)
+                                ->numeric()
+                                ->minValue(1)
+                                ->required()
+                                ->suffix("unit")
+                                ->afterStateUpdated(function (
+                                    callable $set,
+                                    $state,
+                                    $get
+                                ) {
+                                    $priceRupiah = $get("price_rupiah") ?? 0;
+                                    $amount = $priceRupiah * $state;
+                                    $set("amount_rupiah", $amount);
+                                }),
+                            TextInput::make("price_rupiah")
+                                ->label("Harga (IDR)")
+                                ->live(onBlur: true)
+                                ->required()
+                                ->numeric()
+                                ->prefix("Rp")
+                                ->afterStateUpdated(function (
+                                    callable $set,
+                                    $state,
+                                    $get
+                                ) {
+                                    $usd = Usd::find(1);
+                                    if ($usd && $usd->dollar != 0) {
+                                        $set(
+                                            "price_dollar",
+                                            $state / $usd->dollar
+                                        );
+                                    } else {
+                                        $set("price_dollar", 0);
+                                    }
+                                    $quantity = $get("quantity") ?? 1;
+                                    $amountRupiah = $state * $quantity;
+                                    $set("amount_rupiah", $amountRupiah);
+                                    $set(
+                                        "amount_dollar",
+                                        $usd ? $amountRupiah / $usd->dollar : 0
+                                    );
+                                }),
+                            TextInput::make("price_dollar")
+                                ->label("Harga (USD)")
+                                ->live(onBlur: true)
+                                ->numeric()
+                                ->prefix('$')
+                                ->afterStateUpdated(function (
+                                    callable $set,
+                                    $state,
+                                    $get
+                                ) {
+                                    $usd = Usd::find(1);
+                                    if ($usd && $usd->dollar != 0) {
+                                        $set(
+                                            "price_rupiah",
+                                            $state * $usd->dollar
+                                        );
+                                    } else {
+                                        $set("price_rupiah", 0);
+                                    }
+                                    $quantity = $get("quantity") ?? 1;
+                                    $amountDollar = $state * $quantity;
+                                    $set("amount_dollar", $amountDollar);
+                                    $set(
+                                        "amount_rupiah",
+                                        $usd ? $amountDollar * $usd->dollar : 0
+                                    );
+                                }),
+                            TextInput::make("amount_rupiah")
+                                ->label("Total (IDR)")
+                                ->prefix("Rp")
+                                ->default(0),
+                            TextInput::make("amount_dollar")
+                                ->label("Total (USD)")
+                                ->prefix('$'),
+                        ])
+                        ->defaultItems(1)
+                        ->columnSpanFull()
+                        ->columns(8)
+                        ->collapsible()
+                        ->cloneable()
+                        ->itemLabel(
+                            fn(array $state): ?string => $state["name"] ?? null
+                        ),
+                ]),
         ]);
     }
 
@@ -152,22 +258,12 @@ class InvoiceResource extends Resource
                     ->sortable(),
                 TextColumn::make("invoice_date")
                     ->label("Invoice Date")
-                    ->date()
+                    ->date("d/m/Y")
                     ->sortable(),
-                TextColumn::make("item.name")
-                    ->label("Item")
-                    ->searchable()
-                    ->sortable(
-                        query: function (
-                            Builder $query,
-                            string $direction
-                        ): Builder {
-                            return $query->orderByRaw(
-                                "(SELECT GROUP_CONCAT(name) FROM items WHERE items.invoice_id = invoices.id) " .
-                                    $direction
-                            );
-                        }
-                    ),
+                TextColumn::make("item_count")
+                    ->label("Total Items")
+                    ->counts("item")
+                    ->sortable(),
                 TextColumn::make("item.amount_rupiah")
                     ->label("Amount (IDR/USD)")
                     ->description(function (Invoice $record): string {
@@ -229,8 +325,10 @@ class InvoiceResource extends Resource
                             [
                                 "Content-Type" => "application/pdf",
                                 "Content-Disposition" =>
-                                    'attachment; filename="invoice_' .
-                                    $record->customer->id .
+                                    'attachment; filename="' .
+                                    $record->id .
+                                    "-" .
+                                    $record->customer->nama .
                                     '.pdf"',
                             ],
                             Notification::make()
@@ -257,7 +355,9 @@ class InvoiceResource extends Resource
                             ->setOption("defaultFont", "DejaVu Sans");
 
                         $pdfPath = storage_path(
-                            "app/invoices/invoice_" .
+                            "app/invoices/" .
+                                $record->id .
+                                "-" .
                                 $record->customer->nama .
                                 ".pdf"
                         );
@@ -346,7 +446,10 @@ class InvoiceResource extends Resource
 
                                     $pdfContent = $pdf->output();
                                     $zip->addFromString(
-                                        "invoice_{$record->id}.pdf",
+                                        $record->id .
+                                            "-" .
+                                            $record->customer->nama .
+                                            ".pdf",
                                         $pdfContent
                                     );
                                 }
@@ -388,7 +491,9 @@ class InvoiceResource extends Resource
                                         );
 
                                     $pdfPath = storage_path(
-                                        "app/invoices/invoice_" .
+                                        "app/invoices/" .
+                                            $record->id .
+                                            "-" .
                                             $record->customer->nama .
                                             ".pdf"
                                     );

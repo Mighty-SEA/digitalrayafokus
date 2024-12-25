@@ -29,9 +29,7 @@ class InvoiceMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Invoice #' . $this->invoice->id,
-        );
+        return new Envelope(subject: "Invoice #" . $this->invoice->id);
     }
 
     /**
@@ -45,9 +43,6 @@ class InvoiceMail extends Mailable
                 "invoice" => $this->invoice, // Data invoice yang diteruskan ke view
             ]
         );
-
-
-
     }
 
     /**
@@ -60,7 +55,9 @@ class InvoiceMail extends Mailable
         return [
             \Illuminate\Mail\Mailables\Attachment::fromPath(
                 storage_path(
-                    "app/invoices/invoice_" .
+                    "app/invoices/" .
+                        $this->invoice->id .
+                        "-" .
                         $this->invoice->customer->nama .
                         ".pdf"
                 )
