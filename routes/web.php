@@ -8,7 +8,7 @@ use Illuminate\Notifications\Messages\DatabaseMessage;
 use function Pest\Laravel\get;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('https://febri.minty.my.id');
 });
 
 Route::get('/test', function () {
