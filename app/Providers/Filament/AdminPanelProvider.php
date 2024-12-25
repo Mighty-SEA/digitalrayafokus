@@ -23,8 +23,9 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
+        $company = \App\Models\Companies::find(1);
         return $panel
-            ->brandName("PT Digital Raya Fokus")
+            ->brandName($company ? $company->name : "Admin Panel")
             ->default()
             ->id("admin")
             ->path("admin")
