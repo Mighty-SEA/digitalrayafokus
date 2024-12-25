@@ -32,10 +32,14 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 "primary" => Color::Amber,
             ])
-            ->discoverResources(
-                in: app_path("Filament/Resources"),
-                for: "App\\Filament\\Resources"
-            )
+            // ->discoverResources(
+            //     in: app_path("Filament/Resources"),
+            //     for: "App\\Filament\\Resources"
+            // )
+            ->resources([
+                \App\Filament\Resources\InvoiceResource::class,
+                \App\Filament\Resources\CompaniesResource::class,
+            ])
             ->discoverPages(
                 in: app_path("Filament/Pages"),
                 for: "App\\Filament\\Pages"
@@ -56,19 +60,24 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                \Hasnayeen\Themes\Http\Middleware\SetTheme::class
+                \Hasnayeen\Themes\Http\Middleware\SetTheme::class,
             ])
             ->authMiddleware([Authenticate::class])
             ->databaseNotifications()
             ->userMenuItems([
                 MenuItem::make()
-                    ->label("Github")
-                    ->icon("heroicon-o-code-bracket")
-                    ->url("https://github.com/rehanrosyidi", true),
+                    ->label("Company Settings")
+                    ->icon("heroicon-o-cog") // Optional: tambahkan icon
+                    ->url(
+                        fn(): string => \App\Filament\Resources\CompaniesResource::getUrl(
+                            "edit",
+                            [
+                                "record" => 1,
+                            ]
+                        )
+                    ),
             ])
-            ->plugin(
-                \Hasnayeen\Themes\ThemesPlugin::make()
-            )
+            ->plugin(\Hasnayeen\Themes\ThemesPlugin::make())
             ->sidebarCollapsibleOnDesktop();
     }
 }
