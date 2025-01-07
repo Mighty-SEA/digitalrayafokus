@@ -3,36 +3,20 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoiceResource\Pages;
-use App\Filament\Resources\InvoiceResource\RelationManagers;
-use App\Mail\InvoiceMail;
-use App\Models\Companies;
 use App\Models\Invoice;
-use App\Models\Item;
-use App\Models\Usd;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Doctrine\DBAL\Schema\Column;
-use Filament\Forms;
+
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
-use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use ZipArchive;
 use Filament\Forms\Components\Actions\Action as FormAction;
 use Illuminate\Support\Facades\Http;
 use App\Models\Settings;
@@ -42,7 +26,6 @@ use App\Filament\Resources\InvoiceResource\Actions\SendInvoiceAction;
 use App\Filament\Resources\InvoiceResource\Actions\BulkActions;
 use Filament\Forms\Components\Group;
 
-use function Laravel\Prompts\select;
 
 class InvoiceResource extends Resource
 {
