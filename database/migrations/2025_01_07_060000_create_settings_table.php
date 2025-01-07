@@ -21,11 +21,11 @@ return new class extends Migration
 
         // Insert default settings
         $settings = [
-            'company_name' => '',
-            'company_email' => '',
-            'company_phone' => '',
-            'company_address' => '',
-            'company_logo' => '',
+            'company_name' => 'Pt.Digital Raya Fokus',
+            'company_email' => 'idigitalrayafokus@gmail.com',
+            'company_phone' => '+62 896-9605-9684',
+            'company_address' => 'Kapten Sarwono No.32, Banjaran Wetan, Kec. Banjaran, Kabupaten Bandung, Jawa Barat 40377 Indonesia',
+            'company_logo' => 'https://febri.minty.my.id/asset/logo.png',
             'current_dollar' => '15000',
         ];
 

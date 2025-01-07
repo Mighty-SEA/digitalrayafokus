@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\InvoiceMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class BulkActions
 {
@@ -112,9 +113,22 @@ class BulkActions
                             $pdf->save($pdfPath);
 
                             Mail::to($record->email_reciver)->send(new InvoiceMail($record));
+                            
+                            // Delete PDF after sending email
+                            if (File::exists($pdfPath)) {
+                                File::delete($pdfPath);
+                                Log::info('PDF deleted successfully after bulk send: ' . $pdfPath);
+                            }
+                            
                             $successCount++;
 
                         } catch (\Exception $e) {
+                            // Delete PDF even if email fails
+                            if (isset($pdfPath) && File::exists($pdfPath)) {
+                                File::delete($pdfPath);
+                                Log::info('PDF deleted after bulk send failure: ' . $pdfPath);
+                            }
+                            
                             Log::error('Failed to send invoice: ' . $e->getMessage());
                             $failCount++;
                         }

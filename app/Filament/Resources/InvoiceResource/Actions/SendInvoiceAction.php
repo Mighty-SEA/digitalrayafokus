@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\InvoiceMail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 
 class SendInvoiceAction
 {
@@ -58,6 +59,12 @@ class SendInvoiceAction
                         new InvoiceMail($record)
                     );
 
+                    // Delete the PDF file after sending email
+                    if (File::exists($pdfPath)) {
+                        File::delete($pdfPath);
+                        Log::info('PDF deleted successfully: ' . $pdfPath);
+                    }
+
                     return Notification::make()
                         ->title('Invoice Sent')
                         ->body(
@@ -68,6 +75,12 @@ class SendInvoiceAction
                         ->sendToDatabase(Auth::user())
                         ->send();
                 } catch (\Exception $e) {
+                    // Delete the PDF file even if email fails
+                    if (File::exists($pdfPath)) {
+                        File::delete($pdfPath);
+                        Log::info('PDF deleted after email failure: ' . $pdfPath);
+                    }
+
                     Log::error(
                         'Failed to send invoice: ' . $e->getMessage()
                     );
