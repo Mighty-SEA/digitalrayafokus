@@ -16,6 +16,8 @@ class InvoiceExporter extends Exporter
         return [
             ExportColumn::make('id')
                 ->label('ID'),
+            ExportColumn::make('customer.nama')
+                ->label('Customer Name'),
             ExportColumn::make('customer_id'),
             ExportColumn::make('invoice_date'),
             ExportColumn::make('due_date'),
@@ -23,6 +25,16 @@ class InvoiceExporter extends Exporter
             ExportColumn::make('is_dollar'),
             ExportColumn::make('current_dollar'),
             ExportColumn::make('status'),
+            ExportColumn::make('item_total_idr')
+                ->label('Amount (IDR)')
+                ->state(function (Invoice $record): string {
+                    return number_format($record->item()->sum('amount_rupiah'), 0, ',', '.');
+                }),
+            ExportColumn::make('item_total_usd')
+                ->label('Amount (USD)')
+                ->state(function (Invoice $record): string {
+                    return number_format($record->item()->sum('amount_dollar'), 2, '.', ',');
+                }),
             ExportColumn::make('created_at'),
             ExportColumn::make('updated_at'),
         ];
