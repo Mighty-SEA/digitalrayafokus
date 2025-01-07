@@ -166,21 +166,15 @@ class InvoiceResource extends Resource
                             Select::make('is_dollar')
                                 ->label('Currency')
                                 ->options([
-                                    '0' => 'IDR (Rupiah)',
-                                    '1' => 'USD (Dollar)'
+                                    0 => 'IDR (Rupiah)',
+                                    1 => 'USD (Dollar)'
                                 ])
-                                ->default('0')
+                                ->default(0)
                                 ->live()
                                 ->afterStateUpdated(function ($state, callable $set) {
-                                    $set('is_dollar', $state === 'usd');
+                                    $set('is_dollar', (bool) $state);
                                 })
                                 ->columnSpan(2),
-
-                            // Hidden field untuk is_dollar
-                            Toggle::make('is_dollar')
-                                ->hidden()
-                                ->default(false)
-                                ->dehydrated(),
                         ])
                         ->columns(6),
                 ])
@@ -202,7 +196,7 @@ class InvoiceResource extends Resource
                                 ->columnSpan(3),
                             TextInput::make("quantity")
                                 ->default(1)
-                                ->live(onBlur: true)
+                                ->live()
                                 ->numeric()
                                 ->minValue(1)
                                 ->required()
@@ -210,26 +204,29 @@ class InvoiceResource extends Resource
                                 ->columnSpan(2),
                             TextInput::make("price_rupiah")
                                 ->label("Harga (IDR)")
-                                ->live(onBlur: true)
+                                ->live()
                                 ->required()
                                 ->numeric()
                                 ->prefix("Rp")
                                 ->afterStateUpdated(function (callable $set, $state, $get) {
+                                    $quantity = $get("quantity") ?? 1;
+                                    // Calculate and set amount_rupiah
+                                    $set("amount_rupiah", $state * $quantity);
+                                    
+                                    // Calculate USD values if needed
                                     $usd = Settings::get('current_dollar');
                                     if ($usd && $usd != 0) {
                                         $set("price_dollar", $state / $usd);
+                                        $set("amount_dollar", ($state * $quantity) / $usd);
                                     } else {
                                         $set("price_dollar", 0);
+                                        $set("amount_dollar", 0);
                                     }
-                                    $quantity = $get("quantity") ?? 1;
-                                    $amountRupiah = $state * $quantity;
-                                    $set("amount_rupiah", $amountRupiah);
-                                    $set("amount_dollar", $usd ? $amountRupiah / $usd : 0);
                                 })
                                 ->columnSpan(3),
                             TextInput::make("price_dollar")
                                 ->label("Harga (USD)")
-                                ->live(onBlur: true)
+                                ->live()
                                 ->numeric()
                                 ->prefix('$')
                                 ->hidden(fn (Get $get) => !$get('../../is_dollar'))
@@ -237,13 +234,12 @@ class InvoiceResource extends Resource
                             TextInput::make("amount_rupiah")
                                 ->label("Total (IDR)")
                                 ->prefix("Rp")
-                                ->disabled()
+                                ->required()
                                 ->default(0)
                                 ->columnSpan(3),
                             TextInput::make("amount_dollar")
                                 ->label("Total (USD)")
                                 ->prefix('$')
-                                ->disabled()
                                 ->hidden(fn (Get $get) => !$get('../../is_dollar'))
                                 ->columnSpan(3),
                         ])
