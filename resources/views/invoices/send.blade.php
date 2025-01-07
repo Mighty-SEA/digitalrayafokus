@@ -88,8 +88,6 @@
 
             <p>Please review the attached invoice and process the payment before the due date.</p>
 
-            <a href="{{ route('invoices.pay', $invoice->id) }}" class="button">View Invoice & Pay Now</a>
-
             <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
 
             <p>Best regards,<br>{{ $settings['name'] }}</p>

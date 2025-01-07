@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Settings;
 
 class InvoiceMail extends Mailable
 {
@@ -38,9 +39,16 @@ class InvoiceMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: "invoices.send", // Template email
+            view: "invoices.send",
             with: [
-                "invoice" => $this->invoice, // Data invoice yang diteruskan ke view
+                "invoice" => $this->invoice,
+                "settings" => [
+                    'name' => Settings::get('company_name'),
+                    'email' => Settings::get('company_email'),
+                    'phone' => Settings::get('company_phone'),
+                    'address' => Settings::get('company_address'),
+                    'logo' => Settings::get('company_logo'),
+                ]
             ]
         );
     }
