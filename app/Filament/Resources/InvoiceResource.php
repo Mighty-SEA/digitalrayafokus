@@ -36,6 +36,10 @@ use ZipArchive;
 use Filament\Forms\Components\Actions\Action as FormAction;
 use Illuminate\Support\Facades\Http;
 use App\Models\Settings;
+use Filament\Forms\Get;
+use App\Filament\Resources\InvoiceResource\Actions\GeneratePdfAction;
+use App\Filament\Resources\InvoiceResource\Actions\SendInvoiceAction;
+use App\Filament\Resources\InvoiceResource\Actions\BulkActions;
 
 use function Laravel\Prompts\select;
 
@@ -209,6 +213,7 @@ class InvoiceResource extends Resource
                                 ->live(onBlur: true)
                                 ->numeric()
                                 ->prefix('$')
+                                ->hidden(fn (Get $get) => !$get('../../is_dollar'))
                                 ->afterStateUpdated(function (
                                     callable $set,
                                     $state,
@@ -237,7 +242,8 @@ class InvoiceResource extends Resource
                                 ->default(0),
                             TextInput::make("amount_dollar")
                                 ->label("Total (USD)")
-                                ->prefix('$'),
+                                ->prefix('$')
+                                ->hidden(fn (Get $get) => !$get('../../is_dollar')),
                         ])
                         ->defaultItems(1)
                         ->columnSpanFull()
@@ -305,285 +311,16 @@ class InvoiceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->icon("heroicon-o-pencil"),
-                Action::make("generate_pdf")
-                    ->label("Generate PDF")
-                    ->icon("heroicon-o-document")
-                    ->color("success")
-                    ->action(function (Invoice $record) {
-                        $record->customer->nama = mb_convert_encoding(
-                            $record->customer->nama,
-                            "UTF-8",
-                            "auto"
-                        );
-                        $record->item->each(function ($item) {
-                            $item->description = mb_convert_encoding(
-                                $item->description,
-                                "UTF-8",
-                                "auto"
-                            );
-                        });
-
-                        $pdf = Pdf::loadView("invoices.pdf", [
-                            "invoice" => $record,
-                            "settings" => [
-                                "name" => Settings::get('company_name'),
-                                "email" => Settings::get('company_email'),
-                                "phone" => Settings::get('company_phone'),
-                                "address" => Settings::get('company_address'),
-                                "logo" => Settings::get('company_logo'),
-                            ],
-                        ]);
-
-                        return response()->stream(
-                            function () use ($pdf) {
-                                echo $pdf->output();
-                            },
-                            200,
-                            [
-                                "Content-Type" => "application/pdf",
-                                "Content-Disposition" =>
-                                    'attachment; filename="' .
-                                    $record->id .
-                                    "-" .
-                                    $record->customer->nama .
-                                    '.pdf"',
-                            ],
-                            Notification::make()
-                                ->title("PDF Generated")
-                                ->body(
-                                    "The PDF has been generated successfully."
-                                )
-                                ->success()
-                                ->sendToDatabase(Auth::user())
-                                ->send()
-                        );
-                    }),
-                Action::make("send_invoice")
-                    ->label("Send Invoice")
-                    ->icon("heroicon-o-paper-airplane")
-                    ->color("primary")
-                    ->action(function (Invoice $record) {
-                        $pdf = Pdf::loadView("invoices.pdf", [
-                            "invoice" => $record,
-                            "settings" => [
-                                "name" => Settings::get('company_name'),
-                                "email" => Settings::get('company_email'),
-                                "phone" => Settings::get('company_phone'),
-                                "address" => Settings::get('company_address'),
-                                "logo" => Settings::get('company_logo'),
-                            ],
-                        ])
-                            ->setOption("isHtml5ParserEnabled", true)
-                            ->setOption("isPhpEnabled", true)
-                            ->setOption("defaultFont", "DejaVu Sans");
-
-                        $pdfPath = storage_path(
-                            "app/invoices/" .
-                                $record->id .
-                                "-" .
-                                $record->customer->nama .
-                                ".pdf"
-                        );
-                        $pdf->save($pdfPath);
-
-                        if (!file_exists($pdfPath)) {
-                            Log::error("PDF was not saved at " . $pdfPath);
-                            return Notification::make()
-                                ->title("Error")
-                                ->body("Failed to generate PDF.")
-                                ->danger()
-                                ->send();
-                        }
-
-                        try {
-                            Mail::to($record->customer->email)->send(
-                                new InvoiceMail($record)
-                            );
-
-                            return Notification::make()
-                                ->title("Invoice Sent")
-                                ->body(
-                                    "The invoice has been successfully sent to " .
-                                        $record->customer->email
-                                )
-                                ->success()
-                                ->sendToDatabase(Auth::user())
-                                ->send();
-                            return redirect()->back();
-                        } catch (\Exception $e) {
-                            Log::error(
-                                "Failed to send invoice: " . $e->getMessage()
-                            );
-                            return Notification::make()
-                                ->title("Error Sending Invoice")
-                                ->body(
-                                    "There was an error sending the invoice: " .
-                                        $e->getMessage()
-                                )
-                                ->danger()
-                                ->sendToDatabase(Auth::user())
-                                ->send();
-                        }
-                    }),
+                GeneratePdfAction::make(),
+                SendInvoiceAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkActionGroup::make([]),
-                    Tables\Actions\DeleteBulkAction::make()->icon(
-                        "heroicon-o-trash"
-                    ),
-                    BulkAction::make("generate_multiple_pdfs")
-                        ->label("Generate PDFs")
-                        ->icon("heroicon-o-document-duplicate")
-                        ->color("success")
-                        ->action(function ($records) {
-                            $zip = new ZipArchive();
-                            $zipFileName = storage_path(
-                                "app/bulk_invoices.zip"
-                            );
-
-                            if (
-                                $zip->open(
-                                    $zipFileName,
-                                    ZipArchive::CREATE | ZipArchive::OVERWRITE
-                                ) === true
-                            ) {
-                                foreach ($records as $record) {
-                                    $record->customer->nama = mb_convert_encoding(
-                                        $record->customer->nama,
-                                        "UTF-8",
-                                        "auto"
-                                    );
-                                    $record->item->each(function ($item) {
-                                        $item->description = mb_convert_encoding(
-                                            $item->description,
-                                            "UTF-8",
-                                            "auto"
-                                        );
-                                    });
-
-                                    $pdf = Pdf::loadView("invoices.pdf", [
-                                        "invoice" => $record,
-                                        "settings" => [
-                                            "name" => Settings::get('company_name'),
-                                            "email" => Settings::get('company_email'),
-                                            "phone" => Settings::get('company_phone'),
-                                            "address" => Settings::get('company_address'),
-                                            "logo" => Settings::get('company_logo'),
-                                        ],
-                                    ]);
-
-                                    $pdfContent = $pdf->output();
-                                    $zip->addFromString(
-                                        $record->id .
-                                            "-" .
-                                            $record->customer->nama .
-                                            ".pdf",
-                                        $pdfContent
-                                    );
-                                }
-                                $zip->close();
-
-                                return response()
-                                    ->download($zipFileName)
-                                    ->deleteFileAfterSend();
-                            }
-
-                            return Notification::make()
-                                ->title("Error")
-                                ->body("Failed to create ZIP file")
-                                ->danger()
-                                ->send();
-                        }),
-                    BulkAction::make("send_multiple_invoices")
-                        ->label("Send Invoices")
-                        ->icon("heroicon-o-paper-airplane")
-                        ->color("primary")
-                        ->action(function ($records) {
-                            $successCount = 0;
-                            $failCount = 0;
-
-                            foreach ($records as $record) {
-                                try {
-                                    $pdf = Pdf::loadView("invoices.pdf", [
-                                        "invoice" => $record,
-                                        "settings" => [
-                                            "name" => Settings::get('company_name'),
-                                            "email" => Settings::get('company_email'),
-                                            "phone" => Settings::get('company_phone'),
-                                            "address" => Settings::get('company_address'),
-                                            "logo" => Settings::get('company_logo'),
-                                        ],
-                                    ])
-                                        ->setOption(
-                                            "isHtml5ParserEnabled",
-                                            true
-                                        )
-                                        ->setOption("isPhpEnabled", true)
-                                        ->setOption(
-                                            "defaultFont",
-                                            "DejaVu Sans"
-                                        );
-
-                                    $pdfPath = storage_path(
-                                        "app/invoices/" .
-                                            $record->id .
-                                            "-" .
-                                            $record->customer->nama .
-                                            ".pdf"
-                                    );
-                                    $pdf->save($pdfPath);
-
-                                    Mail::to($record->customer->email)->send(
-                                        new InvoiceMail($record)
-                                    );
-
-                                    $successCount++;
-                                } catch (\Exception $e) {
-                                    Log::error(
-                                        "Failed to send invoice: " .
-                                            $e->getMessage()
-                                    );
-                                    $failCount++;
-                                }
-                            }
-
-                            return Notification::make()
-                                ->title("Bulk Invoice Sending Complete")
-                                ->body(
-                                    "Successfully sent {$successCount} invoices, {$failCount} failed."
-                                )
-                                ->success()
-                                ->sendToDatabase(Auth::user())
-                                ->send();
-                        }),
-                    BulkAction::make('updateStatus')
-                        ->label('Update Status')
-                        ->icon('heroicon-o-check-circle')
-                        ->color('info')
-                        ->form([
-                            Select::make('status')
-                                ->label('Select Status')
-                                ->options([
-                                    'pending' => 'Pending',
-                                    'paid' => 'Paid',
-                                    'cancelled' => 'Cancelled',
-                                ])
-                                ->native(false)
-                                ->required()
-                        ])
-                        ->action(function ($records, array $data) {
-                            $records->each(function ($record) use ($data) {
-                                $record->update(['status' => $data['status']]);
-                            });
-
-                            Notification::make()
-                                ->title('Status Updated')
-                                ->body('Selected invoices have been updated successfully.')
-                                ->success()
-                                ->send();
-                        }),
-                ]),
+                Tables\Actions\BulkActionGroup::make(
+                    array_merge(
+                        [Tables\Actions\DeleteBulkAction::make()->icon('heroicon-o-trash')],
+                        BulkActions::getBulkActions()
+                    )
+                ),
             ]);
     }
 
