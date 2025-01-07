@@ -15,38 +15,41 @@ class InvoicesSeeder extends Seeder
     public function run()
     {
         $faker = Faker::create();
-
-        foreach (range(1, 50) as $index) {
-            DB::table('invoices')->insert([
-                'customer_id' => $faker->numberBetween(1, 100), // Sesuaikan dengan range id customer
+        
+        // Create 50 invoices
+        for ($i = 1; $i <= 50; $i++) {
+            $invoiceId = DB::table('invoices')->insertGetId([
+                'customer_id' => $faker->numberBetween(1, 100),
                 'invoice_date' => $faker->date(),
                 'due_date' => $faker->optional()->date(),
                 'email_reciver' => $faker->safeEmail(),
                 'is_dollar' => $faker->boolean(),
-                'current_dollar' => $faker->optional()->randomNumber(2), // Nilai random dolar jika is_dollar true
+                'current_dollar' => $faker->optional()->randomNumber(2),
+                'status' => $faker->randomElement(['pending', 'paid', 'cancelled']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-        };
 
-
-
-        
-        foreach (range(1, 150) as $index) {
-            DB::table('items')->insert([
-                'invoice_id' => $faker->numberBetween(1, 50), // Sesuaikan dengan range id invoice
-                'name' => $faker->word(),
-                'description' => $faker->sentence(),
-                'quantity' => $faker->numberBetween(1, 100),
-                'price_rupiah' => $faker->numberBetween(10000, 1000000),
-                'price_dollar' => $faker->optional()->numberBetween(10, 1000),
-                'amount_rupiah' => $faker->numberBetween(10000, 1000000),
-                'amount_dollar' => $faker->optional()->numberBetween(10, 1000),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Create 1-5 items for each invoice
+            $numItems = $faker->numberBetween(1, 5);
+            for ($j = 1; $j <= $numItems; $j++) {
+                $quantity = $faker->numberBetween(1, 100);
+                $priceRupiah = $faker->numberBetween(10000, 1000000);
+                $priceDollar = $faker->numberBetween(10, 1000);
+                
+                DB::table('items')->insert([
+                    'invoice_id' => $invoiceId,
+                    'name' => $faker->word(),
+                    'description' => $faker->sentence(),
+                    'quantity' => $quantity,
+                    'price_rupiah' => $priceRupiah,
+                    'price_dollar' => $priceDollar,
+                    'amount_rupiah' => $priceRupiah * $quantity,
+                    'amount_dollar' => $priceDollar * $quantity,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
-        
-
     }
 }

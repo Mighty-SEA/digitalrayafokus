@@ -29,5 +29,11 @@ class DatabaseSeeder extends Seeder
                     'email' => 'Demo@demo.com',
                     'password' => Hash::make('demo'), // Hash password
                 ]);
+
+        // Run the Customer and Invoices seeders
+        $this->call([
+            CustomerSeeder::class,
+            InvoicesSeeder::class,
+        ]);
     }
 }
