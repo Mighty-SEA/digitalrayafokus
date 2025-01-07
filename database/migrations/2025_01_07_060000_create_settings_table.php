@@ -26,6 +26,7 @@ return new class extends Migration
             'company_phone' => '',
             'company_address' => '',
             'company_logo' => '',
+            'current_dollar' => '15000',
         ];
 
         foreach ($settings as $key => $value) {

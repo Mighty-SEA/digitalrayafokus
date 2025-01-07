@@ -101,21 +101,14 @@ class InvoiceResource extends Resource
                         ->label("Kurs USD")
                         ->prefix('$')
                         ->numeric()
-                        ->default(Usd::find(1)->dollar)
+                        ->default(Settings::get('current_dollar'))
                         ->afterStateHydrated(function (callable $set) {
-                            $usd = Usd::find(1);
-                            if ($usd) {
-                                $set("current_dollar", $usd->dollar);
-                            }
+                            $set("current_dollar", Settings::get('current_dollar'));
                         })
                         ->live(onBlur: true)
                         ->required()
                         ->afterStateUpdated(function (callable $set, $state) {
-                            $usd = Usd::find(1);
-                            if ($usd) {
-                                $usd->dollar = $state;
-                                $usd->save();
-                            }
+                            Settings::set('current_dollar', $state);
                         })
                         ->suffixAction(
                             FormAction::make("fetch_kurs")
@@ -127,13 +120,9 @@ class InvoiceResource extends Resource
 
                                     if ($response->successful()) {
                                         $data = $response->json();
-                                        $rate =
-                                            $data["conversion_rates"]["IDR"];
+                                        $rate = $data["conversion_rates"]["IDR"];
 
-                                        $usd = Usd::find(1);
-                                        $usd->dollar = $rate;
-                                        $usd->save();
-
+                                        Settings::set('current_dollar', $rate);
                                         $set("current_dollar", $rate);
 
                                         Notification::make()
@@ -143,6 +132,19 @@ class InvoiceResource extends Resource
                                     }
                                 })
                         ),
+                    Toggle::make('is_dollar')
+                        ->label('Use USD as Primary Currency')
+                        ->default(false)
+                        ->live(),
+                    Select::make('status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'paid' => 'Paid',
+                            'cancelled' => 'Cancelled',
+                        ])
+                        ->native(false)
+                        ->default('pending')
+                        ->required(),
                 ])
                 ->columns(6),
 
@@ -185,11 +187,11 @@ class InvoiceResource extends Resource
                                     $state,
                                     $get
                                 ) {
-                                    $usd = Usd::find(1);
-                                    if ($usd && $usd->dollar != 0) {
+                                    $usd = Settings::get('current_dollar');
+                                    if ($usd && $usd != 0) {
                                         $set(
                                             "price_dollar",
-                                            $state / $usd->dollar
+                                            $state / $usd
                                         );
                                     } else {
                                         $set("price_dollar", 0);
@@ -199,7 +201,7 @@ class InvoiceResource extends Resource
                                     $set("amount_rupiah", $amountRupiah);
                                     $set(
                                         "amount_dollar",
-                                        $usd ? $amountRupiah / $usd->dollar : 0
+                                        $usd ? $amountRupiah / $usd : 0
                                     );
                                 }),
                             TextInput::make("price_dollar")
@@ -212,11 +214,11 @@ class InvoiceResource extends Resource
                                     $state,
                                     $get
                                 ) {
-                                    $usd = Usd::find(1);
-                                    if ($usd && $usd->dollar != 0) {
+                                    $usd = Settings::get('current_dollar');
+                                    if ($usd && $usd != 0) {
                                         $set(
                                             "price_rupiah",
-                                            $state * $usd->dollar
+                                            $state * $usd
                                         );
                                     } else {
                                         $set("price_rupiah", 0);
@@ -226,7 +228,7 @@ class InvoiceResource extends Resource
                                     $set("amount_dollar", $amountDollar);
                                     $set(
                                         "amount_rupiah",
-                                        $usd ? $amountDollar * $usd->dollar : 0
+                                        $usd ? $amountDollar * $usd : 0
                                     );
                                 }),
                             TextInput::make("amount_rupiah")
@@ -289,6 +291,14 @@ class InvoiceResource extends Resource
                             );
                         }
                     ),
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'paid' => 'success',
+                        'cancelled' => 'danger',
+                        default => 'warning',
+                    })
+                    ->sortable(),
             ])
             ->filters([
                 //
@@ -545,6 +555,32 @@ class InvoiceResource extends Resource
                                 )
                                 ->success()
                                 ->sendToDatabase(Auth::user())
+                                ->send();
+                        }),
+                    BulkAction::make('updateStatus')
+                        ->label('Update Status')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('info')
+                        ->form([
+                            Select::make('status')
+                                ->label('Select Status')
+                                ->options([
+                                    'pending' => 'Pending',
+                                    'paid' => 'Paid',
+                                    'cancelled' => 'Cancelled',
+                                ])
+                                ->native(false)
+                                ->required()
+                        ])
+                        ->action(function ($records, array $data) {
+                            $records->each(function ($record) use ($data) {
+                                $record->update(['status' => $data['status']]);
+                            });
+
+                            Notification::make()
+                                ->title('Status Updated')
+                                ->body('Selected invoices have been updated successfully.')
+                                ->success()
                                 ->send();
                         }),
                 ]),

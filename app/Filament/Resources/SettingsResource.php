@@ -40,6 +40,11 @@ class SettingsResource extends Resource
                         ->label('Company Logo')
                         ->image()
                         ->directory('company-logos'),
+                    TextInput::make('current_dollar')
+                        ->label('Kurs USD')
+                        ->prefix('$')
+                        ->numeric()
+                        ->required(),
                 ])
                 ->columns(2),
         ]);
