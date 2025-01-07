@@ -163,11 +163,11 @@ class InvoiceResource extends Resource
                                 )
                                 ->columnSpan(4),
 
-                            Select::make('currency_type')
+                            Select::make('is_dollar')
                                 ->label('Currency')
                                 ->options([
-                                    'idr' => 'IDR (Rupiah)',
-                                    'usd' => 'USD (Dollar)'
+                                    '0' => 'IDR (Rupiah)',
+                                    '1' => 'USD (Dollar)'
                                 ])
                                 ->default('idr')
                                 ->live()
