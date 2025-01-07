@@ -1,181 +1,103 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Invoice</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Notification</title>
+    <style>
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            margin: 0;
+            padding: 0;
+            background-color: #f7fafc;
+        }
 
-<style>
-body {
-  background-color: #f6f6f6;
-}
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
 
-.container {
-  width: 100%;
-  padding: 20px;
-}
+        .header {
+            background: #2d3748;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
 
-.invoice-box {
-  max-width: 800px;
-  margin: auto;
-  padding: 30px;
-  border: 1px solid #ddd;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-  font-size: 16px;
-  line-height: 24px;
-  font-family: 'Helvetica Neue', 'Helvetica', Arial, sans-serif;
-  color: #444;
-  background-color: white;
-  border-radius: 8px;
-}
+        .content {
+            padding: 30px;
+        }
 
-.invoice-box table {
-  width: 100%;
-  line-height: inherit;
-  text-align: left;
-}
+        .invoice-details {
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
 
-.invoice-box table td {
-  padding: 5px;
-  vertical-align: top;
-}
+        .button {
+            display: inline-block;
+            background: #4299e1;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin-top: 20px;
+        }
 
-.invoice-box table tr td:nth-child(2) {
-  text-align: right;
-}
-
-.invoice-box table tr.top table td {
-  padding-bottom: 20px;
-}
-
-.invoice-box table tr.information table td {
-  padding-bottom: 40px;
-}
-
-.invoice-box table tr.heading td {
-  background: #3498db;
-  color: white;
-  border-bottom: 1px solid #ddd;
-  font-weight: bold;
-  padding: 10px;
-  border-radius: 4px;
-}
-
-.invoice-box table tr.details td {
-  padding-bottom: 20px;
-}
-
-.invoice-box table tr.item td {
-  border-bottom: 1px solid #eee;
-  padding: 10px 5px;
-}
-
-.invoice-box table tr.item:hover {
-  background: #fafafa;
-}
-
-.invoice-box table tr.item.last td {
-  border-bottom: none;
-}
-
-.invoice-box table tr.total td:nth-child(2) {
-  border-top: 2px solid #3498db;
-  font-weight: bold;
-  color: #3498db;
-  font-size: 18px;
-}
-
-h2 {
-  color: #3498db;
-  margin: 0 0 10px;
-}
-
-h3 {
-  color: #2c3e50;
-  margin: 0 0 10px;
-}
-
-small {
-  color: #7f8c8d;
-}
-
-@media only screen and (max-width: 600px) {
-  .invoice-box table tr.top table td {
-      width: 100%;
-      display: block;
-      text-align: center;
-  }
-
-  .invoice-box table tr.information table td {
-      width: 100%;
-      display: block;
-      text-align: center;
-  }
-}
-</style>
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+            font-size: 0.875rem;
+        }
+    </style>
 </head>
-
 <body>
-<div class="container">
-  <div class="invoice-box">
-    <table cellpadding="0" cellspacing="0">
-      <tr class="top">
-        <td colspan="2">
-          <table>
-            <tr>
-              <td>
-                <h2>Invoice #{{ $invoice->id }}</h2>
-                <div>Created: {{ $invoice->invoice_date }}</div>
-                <div>Due: {{ $invoice->due_date }}</div>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
+    <div class="container">
+        <div class="header">
+            <h1>Invoice #{{ str_pad($invoice->id, 6, '0', STR_PAD_LEFT) }}</h1>
+        </div>
 
-      <tr class="information">
-        <td colspan="2">
-          <table>
-            <tr>
-              <td>
-                <h3>Billed To:</h3>
-                <div>{{ $invoice->customer->nama }}</div>
-                <div>{{ $invoice->customer->email }}</div>
-                <div>{{ $invoice->customer->phone }}</div>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
+        <div class="content">
+            <p>Dear {{ $invoice->customer->nama }},</p>
 
-      <tr class="heading">
-        <td>Item</td>
-        <td>Price</td>
-      </tr>
+            <p>Thank you for your business. Please find attached the invoice for your recent transaction.</p>
 
-      @foreach($invoice->item as $item)
-      <tr class="item">
-        <td>
-          {{ $item->name }} ({{ $item->quantity }}x)<br>
-          <small>{{ $item->description }}</small>
-        </td>
-        <td>
-          Rp {{ number_format($item->price_rupiah * $item->quantity, 0, ',', '.') }}<br>
-          <small>$ {{ number_format($item->price_dollar * $item->quantity, 2) }}</small>
-        </td>
-      </tr>
-      @endforeach
+            <div class="invoice-details">
+                <p><strong>Invoice Date:</strong> {{ date('d F Y', strtotime($invoice->invoice_date)) }}</p>
+                <p><strong>Due Date:</strong> {{ date('d F Y', strtotime($invoice->due_date)) }}</p>
+                <p><strong>Total Amount:</strong> 
+                    {{ $invoice->is_dollar ? '$' : 'Rp' }} 
+                    {{ number_format(
+                        $invoice->is_dollar 
+                            ? $invoice->item->sum('amount_dollar') 
+                            : $invoice->item->sum('amount_rupiah'),
+                        $invoice->is_dollar ? 2 : 0, 
+                        $invoice->is_dollar ? '.' : ',',
+                        $invoice->is_dollar ? ',' : '.'
+                    ) }}
+                </p>
+            </div>
 
-      <tr class="total">
-        <td></td>
-        <td>
-          Total: Rp {{ number_format($invoice->item->sum(function($item) { return $item->quantity * $item->price_rupiah; }), 0, ',', '.') }}<br>
-          <small>$ {{ number_format($invoice->item->sum(function($item) { return $item->quantity * $item->price_dollar; }), 2) }}</small>
-        </td>
-      </tr>
-    </table>
-  </div>
-</div>
+            <p>Please review the attached invoice and process the payment before the due date.</p>
+
+            <a href="{{ route('invoices.pay', $invoice->id) }}" class="button">View Invoice & Pay Now</a>
+
+            <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+
+            <p>Best regards,<br>{{ $settings['name'] }}</p>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated email. Please do not reply directly to this message.</p>
+        </div>
+    </div>
 </body>
 </html>
