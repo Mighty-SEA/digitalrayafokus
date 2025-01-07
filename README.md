@@ -1,66 +1,88 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚀 Sistem Manajemen Faktur Modern
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Solusi manajemen faktur yang canggih dan lengkap, dibangun dengan Laravel dan Panel Admin Filament untuk memudahkan pengelolaan bisnis Anda.
 
-## About Laravel
+## ✨ Fitur Unggulan
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 📄 Manajemen Faktur Super Praktis
+- Buat dan edit faktur dengan mudah dan cepat
+- Mendukung IDR & USD dengan konversi otomatis
+- Perhitungan jatuh tempo yang akurat
+- Ekspor PDF dan kirim email dalam sekali klik
+- Fitur aksi massal yang efisien
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 👥 Manajemen Pelanggan Terpadu
+- Database pelanggan yang terorganisir
+- Tambah pelanggan baru secara instan
+- Kelola informasi lengkap pelanggan
+- Pantau riwayat transaksi dengan mudah
+- Pembaruan data pelanggan yang fleksibel
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 📦 Manajemen Item yang Powerful
+- Dukung multiple item dalam satu faktur
+- Kalkulasi otomatis yang akurat
+- Harga dalam IDR dan USD
+- Pantau stok dengan mudah
+- Kelola inventaris secara efisien
 
-## Learning Laravel
+### 💰 Fitur Keuangan Canggih
+- Konversi mata uang real-time
+- Perhitungan otomatis yang akurat
+- Dukungan multi-mata uang
+- Monitor nilai tukar terkini
+- Laporan keuangan komprehensif
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 📊 Ekspor & Pelaporan Lengkap
+- Generate PDF profesional
+- Sistem email terintegrasi
+- Ekspor data ke Excel
+- Statistik yang informatif
+- Laporan penjualan detail
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 📈 Dasbor & Analitik Interaktif
+- Pantau performa bisnis
+- Analisis tingkat pembatalan
+- Monitor rasio pembayaran
+- Visualisasi data penjualan
+- Analisis tren bisnis
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Teknologi yang Digunakan
 
-## Laravel Sponsors
+### Backend Handal
+- Laravel 11 - Framework PHP terpopuler
+- PHP 8.2 - Performa tinggi
+- Database MySQL - Penyimpanan data yang andal
+- Panel Admin Filament v3.2 - Antarmuka admin modern
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Frontend Modern
+- Tailwind CSS - Desain responsif
+- Livewire - Interaksi dinamis
+- Alpine.js - JavaScript ringan
 
-### Premium Partners
+### Paket Pendukung
+- barryvdh/laravel-dompdf: Generator PDF
+- filament/notifications: Sistem notifikasi
+- hasnayeen/themes: Kustomisasi tema
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### 📝 Cara Membuat Faktur
+1. Buka menu Faktur
+2. Klik "Buat Faktur Baru"
+3. Isi data pelanggan
+4. Tambahkan item faktur
+5. Pilih mata uang
+6. Simpan dan generate PDF
 
-## Contributing
+### 📧 Pengiriman Faktur
+- Kirim individual dengan satu klik
+- Fitur pengiriman massal
+- Generate PDF otomatis
+- Template email yang dapat disesuaikan
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🤝 Kontribusi
 
-## Code of Conduct
+1. Fork repositori
+2. Buat branch fitur
+3. Commit perubahan
+4. Push ke branch
+5. Buat Pull Request
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
