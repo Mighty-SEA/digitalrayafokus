@@ -23,6 +23,33 @@ class BulkActions
                 ->icon('heroicon-o-document-duplicate')
                 ->color('success')
                 ->action(function ($records) {
+                    // If only one record is selected, generate single PDF
+                    if ($records->count() === 1) {
+                        $record = $records->first();
+                        $pdf = Pdf::loadView('invoices.pdf', [
+                            'invoice' => $record,
+                            'settings' => [
+                                'name' => Settings::get('company_name'),
+                                'email' => Settings::get('company_email'),
+                                'phone' => Settings::get('company_phone'),
+                                'address' => Settings::get('company_address'),
+                                'logo' => Settings::get('company_logo'),
+                            ],
+                        ]);
+
+                        return response()->stream(
+                            function () use ($pdf) {
+                                echo $pdf->output();
+                            },
+                            200,
+                            [
+                                'Content-Type' => 'application/pdf',
+                                'Content-Disposition' => 'attachment; filename="' . $record->id . '-' . $record->customer->nama . '.pdf"',
+                            ]
+                        );
+                    }
+
+                    // For multiple records, create ZIP file
                     $zip = new ZipArchive();
                     $zipFileName = 'invoices-' . now()->format('Y-m-d-H-i-s') . '.zip';
                     $zipPath = storage_path('app/temp/' . $zipFileName);
