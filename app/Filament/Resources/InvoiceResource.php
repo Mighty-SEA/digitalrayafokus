@@ -169,7 +169,7 @@ class InvoiceResource extends Resource
                                     '0' => 'IDR (Rupiah)',
                                     '1' => 'USD (Dollar)'
                                 ])
-                                ->default('idr')
+                                ->default('0')
                                 ->live()
                                 ->afterStateUpdated(function ($state, callable $set) {
                                     $set('is_dollar', $state === 'usd');
