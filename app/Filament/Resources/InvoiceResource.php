@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\Mail;
 use ZipArchive;
 use Filament\Forms\Components\Actions\Action as FormAction;
 use Illuminate\Support\Facades\Http;
+use App\Models\Settings;
 
 use function Laravel\Prompts\select;
 
@@ -314,7 +315,13 @@ class InvoiceResource extends Resource
 
                         $pdf = Pdf::loadView("invoices.pdf", [
                             "invoice" => $record,
-                            "company" => Companies::find(1),
+                            "settings" => [
+                                "name" => Settings::get('company_name'),
+                                "email" => Settings::get('company_email'),
+                                "phone" => Settings::get('company_phone'),
+                                "address" => Settings::get('company_address'),
+                                "logo" => Settings::get('company_logo'),
+                            ],
                         ]);
 
                         return response()->stream(
@@ -348,7 +355,13 @@ class InvoiceResource extends Resource
                     ->action(function (Invoice $record) {
                         $pdf = Pdf::loadView("invoices.pdf", [
                             "invoice" => $record,
-                            "company" => Companies::find(1),
+                            "settings" => [
+                                "name" => Settings::get('company_name'),
+                                "email" => Settings::get('company_email'),
+                                "phone" => Settings::get('company_phone'),
+                                "address" => Settings::get('company_address'),
+                                "logo" => Settings::get('company_logo'),
+                            ],
                         ])
                             ->setOption("isHtml5ParserEnabled", true)
                             ->setOption("isPhpEnabled", true)
@@ -441,7 +454,13 @@ class InvoiceResource extends Resource
 
                                     $pdf = Pdf::loadView("invoices.pdf", [
                                         "invoice" => $record,
-                                        "company" => Companies::find(1),
+                                        "settings" => [
+                                            "name" => Settings::get('company_name'),
+                                            "email" => Settings::get('company_email'),
+                                            "phone" => Settings::get('company_phone'),
+                                            "address" => Settings::get('company_address'),
+                                            "logo" => Settings::get('company_logo'),
+                                        ],
                                     ]);
 
                                     $pdfContent = $pdf->output();
@@ -478,7 +497,13 @@ class InvoiceResource extends Resource
                                 try {
                                     $pdf = Pdf::loadView("invoices.pdf", [
                                         "invoice" => $record,
-                                        "company" => Companies::find(1),
+                                        "settings" => [
+                                            "name" => Settings::get('company_name'),
+                                            "email" => Settings::get('company_email'),
+                                            "phone" => Settings::get('company_phone'),
+                                            "address" => Settings::get('company_address'),
+                                            "logo" => Settings::get('company_logo'),
+                                        ],
                                     ])
                                         ->setOption(
                                             "isHtml5ParserEnabled",

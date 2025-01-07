@@ -96,7 +96,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="name">{{ $company->name }}</div>
+            <div class="name">{{ $settings['name'] }}</div>
             <div class="invoice-details">
                 <div class="invoice-number">Invoice #{{ $invoice->id }}</div>
                 <div class="invoice-date">Date: {{ $invoice->invoice_date}}</div>
@@ -111,10 +111,10 @@
         </div>
         <div class="invoice-from">
             <div class="title">From:</div>
-            <div>{{ $company->name }}</div>
-            <div>{{ $company->address }}</div>
-            <div>{{ $company->phone }}</div>
-            <div>{{ $company->email }}</div>
+            <div>{{ $settings['name'] }}</div>
+            <div>{{ $settings['address'] }}</div>
+            <div>{{ $settings['phone'] }}</div>
+            <div>{{ $settings['email'] }}</div>
         </div>
         <table>
             <thead>

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Resources\SettingsResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -23,9 +24,7 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        $company = \App\Models\Companies::find(1);
         return $panel
-            ->brandName($company ? $company->name : "Admin Panel")
             ->default()
             ->id("admin")
             ->path("admin")
@@ -33,23 +32,15 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 "primary" => Color::Amber,
             ])
-            // ->discoverResources(
-            //     in: app_path("Filament/Resources"),
-            //     for: "App\\Filament\\Resources"
-            // )
             ->resources([
                 \App\Filament\Resources\InvoiceResource::class,
-                \App\Filament\Resources\CompaniesResource::class,
+                \App\Filament\Resources\SettingsResource::class,
             ])
             ->discoverPages(
                 in: app_path("Filament/Pages"),
                 for: "App\\Filament\\Pages"
             )
             ->pages([Pages\Dashboard::class])
-            // ->discoverWidgets(
-            //     in: app_path("Filament/Widgets"),
-            //     for: "App\\Filament\\Widgets"
-            // )
             ->widgets([\App\Filament\Widgets\StatsOverview::class])
             ->middleware([
                 EncryptCookies::class,
@@ -67,16 +58,9 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()
             ->userMenuItems([
                 MenuItem::make()
-                    ->label("Company Settings")
-                    ->icon("heroicon-o-cog") // Optional: tambahkan icon
-                    ->url(
-                        fn(): string => \App\Filament\Resources\CompaniesResource::getUrl(
-                            "edit",
-                            [
-                                "record" => 1,
-                            ]
-                        )
-                    ),
+                    ->label('Settings')
+                    ->icon('heroicon-o-cog')
+                    ->url(fn(): string => SettingsResource::getUrl('index')),
             ])
             ->plugin(\Hasnayeen\Themes\ThemesPlugin::make())
             ->sidebarCollapsibleOnDesktop();
