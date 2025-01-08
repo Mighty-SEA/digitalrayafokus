@@ -19,6 +19,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Navigation\Navigation;
+use Filament\Navigation\NavigationItem;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -29,7 +31,8 @@ class AdminPanelProvider extends PanelProvider
             ->id("admin")
             ->path("admin")
             ->login()
-            ->brandName(fn () => \App\Models\Settings::get('company_name') ?? config('app.name'))
+            ->brandLogo(fn () => view('filament.brand-logo'))
+            ->sidebarCollapsibleOnDesktop()
             ->colors([
                 "primary" => Color::Amber,
             ])
@@ -63,7 +66,6 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-cog')
                     ->url(fn(): string => SettingsResource::getUrl('index')),
             ])
-            ->plugin(\Hasnayeen\Themes\ThemesPlugin::make())
-            ->sidebarCollapsibleOnDesktop();
+            ->plugin(\Hasnayeen\Themes\ThemesPlugin::make());
     }
 }
