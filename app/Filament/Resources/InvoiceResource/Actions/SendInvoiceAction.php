@@ -55,7 +55,7 @@ class SendInvoiceAction
                 }
 
                 try {
-                    Mail::to($record->customer->email)->send(
+                    Mail::to($record->email_reciver)->send(
                         new InvoiceMail($record)
                     );
 

@@ -104,7 +104,7 @@ class InvoiceResource extends Resource
                                 ->required()
                                 ->columnSpan(1),
 
-                                Select::make('is_dollar')
+                            Select::make('is_dollar')
                                 ->label('Currency')
                                 ->options([
                                     0 => 'IDR (Rupiah)',
@@ -112,42 +112,6 @@ class InvoiceResource extends Resource
                                 ])
                                 ->default(0)
                                 ->live()
-                                ->afterStateUpdated(function ($state, callable $set, $get) {
-                                    // Convert state to boolean
-                                    $is_dollar = (bool) $state;
-                                    
-                                    // Update the items collection if it exists
-                                    $items = $get('items') ?? [];
-                                    foreach ($items as $index => $item) {
-                                        if ($is_dollar) {
-                                            // Convert to USD
-                                            $usd = Settings::get('current_dollar');
-                                            if ($usd && $usd != 0) {
-                                                $price_dollar = $item['price_rupiah'] / $usd;
-                                                $amount_dollar = $price_dollar * ($item['quantity'] ?? 1);
-                                                
-                                                $set("items.{$index}.price_dollar", $price_dollar);
-                                                $set("items.{$index}.amount_dollar", $amount_dollar);
-                                            }
-                                        } else {
-                                            // Convert to IDR
-                                            $usd = Settings::get('current_dollar');
-                                            if ($usd && $usd != 0) {
-                                                $price_rupiah = $item['price_dollar'] * $usd;
-                                                $amount_rupiah = $price_rupiah * ($item['quantity'] ?? 1);
-                                                
-                                                $set("items.{$index}.price_rupiah", $price_rupiah);
-                                                $set("items.{$index}.amount_rupiah", $amount_rupiah);
-                                            }
-                                        }
-                                    }
-                                    
-                                    Notification::make()
-                                        ->title('Currency Updated')
-                                        ->body('Currency has been changed to ' . ($state ? 'USD' : 'IDR'))
-                                        ->success()
-                                        ->send();
-                                })
                                 ->columnSpan(1),
                         ])
                         ->columns(4),
@@ -193,7 +157,7 @@ class InvoiceResource extends Resource
                 ])
                 ->columns(1),
 
-            Section::make("Items")
+                Section::make("Items")
                 ->description("Add invoice items")
                 ->icon("heroicon-o-shopping-cart")
                 ->schema([
@@ -204,68 +168,101 @@ class InvoiceResource extends Resource
                                 ->required()
                                 ->live()
                                 ->columnSpan(2),
-                            TextInput::make("description")
-                                ->columnSpan(2),
+                            TextInput::make("description")->columnSpan(2),
                             TextInput::make("quantity")
                                 ->default(1)
-                                ->live()
+                                ->live(onBlur: true)
                                 ->numeric()
                                 ->minValue(1)
                                 ->required()
                                 ->suffix("unit")
-                                ->columnSpan(1),
+                                ->afterStateUpdated(function (
+                                    callable $set,
+                                    $state,
+                                    $get
+                                ) {
+                                    $priceRupiah = $get("price_rupiah") ?? 0;
+                                    $amount = $priceRupiah * $state;
+                                    $set("amount_rupiah", $amount);
+                                }),
                             TextInput::make("price_rupiah")
-                                ->label(fn ($get) => $get('../../is_dollar') ? "Price (USD)" : "Price (IDR)")
-                                ->live()
+                                ->label("Harga (IDR)")
+                                ->live(onBlur: true)
                                 ->required()
                                 ->numeric()
-                                ->prefix(fn ($get) => $get('../../is_dollar') ? '$' : 'Rp')
-                                ->visible(fn ($get) => !$get('../../is_dollar'))
-                                ->afterStateUpdated(function (callable $set, $state, $get) {
-                                    $quantity = $get("quantity") ?? 1;
-                                    $set("amount_rupiah", $state * $quantity);
-                                    
-                                    $usd = Settings::get('current_dollar');
-                                    if ($usd && $usd != 0) {
-                                        $set("price_dollar", $state / $usd);
-                                        $set("amount_dollar", ($state * $quantity) / $usd);
+                                ->prefix("Rp")
+                                ->afterStateUpdated(function (
+                                    callable $set,
+                                    $state,
+                                    $get
+                                ) {
+                                    $currentDollar = Settings::get('current_dollar');
+                                    if ($currentDollar != 0) {
+                                        $set(
+                                            "price_dollar",
+                                            $state / $currentDollar
+                                        );
+                                    } else {
+                                        $set("price_dollar", 0);
                                     }
+                                    $quantity = $get("quantity") ?? 1;
+                                    $amountRupiah = $state * $quantity;
+                                    $set("amount_rupiah", $amountRupiah);
+                                    $set(
+                                        "amount_dollar",
+                                        $currentDollar ? $amountRupiah / $currentDollar : 0
+                                    );
                                 })
-                                ->columnSpan(2),
+                                ->hidden(fn (Get $get): bool => $get('../../is_dollar')),
                             TextInput::make("price_dollar")
-                                ->label("Price (USD)")
-                                ->live()
-                                ->required()
+                                ->label("Harga (USD)")
+                                ->live(onBlur: true)
                                 ->numeric()
                                 ->prefix('$')
-                                ->visible(fn ($get) => $get('../../is_dollar'))
-                                ->afterStateUpdated(function (callable $set, $state, $get) {
-                                    $quantity = $get("quantity") ?? 1;
-                                    $set("amount_dollar", $state * $quantity);
-                                    
-                                    $usd = Settings::get('current_dollar');
-                                    if ($usd && $usd != 0) {
-                                        $set("price_rupiah", $state * $usd);
-                                        $set("amount_rupiah", ($state * $quantity) * $usd);
+                                ->hidden(fn (Get $get): bool => !$get('../../is_dollar'))
+                                ->afterStateUpdated(function (
+                                    callable $set,
+                                    $state,
+                                    $get
+                                ) {
+                                    $currentDollar = Settings::get('current_dollar');
+                                    if ($currentDollar != 0) {
+                                        $set(
+                                            "price_rupiah",
+                                            $state * $currentDollar
+                                        );
+                                    } else {
+                                        $set("price_rupiah", 0);
                                     }
-                                })
-                                ->columnSpan(2),
+                                    $quantity = $get("quantity") ?? 1;
+                                    $amountDollar = $state * $quantity;
+                                    $set("amount_dollar", $amountDollar);
+                                    $set(
+                                        "amount_rupiah",
+                                        $currentDollar ? $amountDollar * $currentDollar : 0
+                                    );
+                                }),
                             TextInput::make("amount_rupiah")
                                 ->label("Total (IDR)")
                                 ->prefix("Rp")
-                                ->required()
                                 ->default(0)
-                                ->columnSpan(2),
+                                ->hidden(fn (Get $get): bool => $get('../../is_dollar')),
+                            TextInput::make("amount_dollar")
+                                ->label("Total (USD)")
+                                ->prefix('$')
+                                ->hidden(fn (Get $get): bool => !$get('../../is_dollar')),
                         ])
                         ->defaultItems(1)
                         ->columnSpanFull()
-                        ->columns(6)
+                        ->columns(8)
                         ->collapsible()
                         ->cloneable()
-                        ->itemLabel(fn(array $state): ?string => $state["name"] ?? null),
+                        ->itemLabel(
+                            fn(array $state): ?string => $state["name"] ?? null
+                        ),
                 ]),
         ]);
-    }
+        }
 
     public static function table(Table $table): Table
     {
@@ -296,6 +293,9 @@ class InvoiceResource extends Resource
                 TextColumn::make("item.amount_rupiah")
                     ->label("Amount (IDR/USD)")
                     ->description(function (Invoice $record): string {
+                        if (!$record->is_dollar) {
+                            return "";
+                        }
                         $total_dollar = $record->item()->sum("amount_dollar");
                         return $total_dollar > 0
                             ? "$ " . number_format($total_dollar, 2)
