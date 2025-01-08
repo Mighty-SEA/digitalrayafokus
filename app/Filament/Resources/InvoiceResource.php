@@ -39,7 +39,6 @@ class InvoiceResource extends Resource
                 ->description("Enter invoice information")
                 ->icon("heroicon-o-document-text")
                 ->schema([
-                    // Customer Information Group
                     Group::make()
                         ->schema([
                             Select::make("customer_id")
@@ -59,7 +58,7 @@ class InvoiceResource extends Resource
                                         $set("email_reciver", $customer->email);
                                     }
                                 })
-                                ->columnSpan(3),
+                                ->columnSpan(1),
 
                             TextInput::make("email_reciver")
                                 ->live(onBlur: true)
@@ -70,11 +69,10 @@ class InvoiceResource extends Resource
                                 ->label("Email Penerima")
                                 ->email()
                                 ->required()
-                                ->columnSpan(3),
+                                ->columnSpan(1),
                         ])
-                        ->columns(6),
+                        ->columns(2),
 
-                    // Dates and Currency Group
                     Group::make()
                         ->schema([
                             DatePicker::make("invoice_date")
@@ -86,14 +84,14 @@ class InvoiceResource extends Resource
                                     $dueDate = \Carbon\Carbon::parse($state)->addDays(7);
                                     $set("due_date", $dueDate);
                                 })
-                                ->columnSpan(2),
+                                ->columnSpan(1),
 
                             DatePicker::make("due_date")
                                 ->required()
                                 ->displayFormat("d/m/Y")
                                 ->minDate(now())
                                 ->default(now()->addDays(7))
-                                ->columnSpan(2),
+                                ->columnSpan(1),
 
                             Select::make('status')
                                 ->options([
@@ -104,11 +102,56 @@ class InvoiceResource extends Resource
                                 ->native(false)
                                 ->default('pending')
                                 ->required()
-                                ->columnSpan(2),
-                        ])
-                        ->columns(6),
+                                ->columnSpan(1),
 
-                    // Currency Settings
+                                Select::make('is_dollar')
+                                ->label('Currency')
+                                ->options([
+                                    0 => 'IDR (Rupiah)',
+                                    1 => 'USD (Dollar)'
+                                ])
+                                ->default(0)
+                                ->live()
+                                ->afterStateUpdated(function ($state, callable $set, $get) {
+                                    // Convert state to boolean
+                                    $is_dollar = (bool) $state;
+                                    
+                                    // Update the items collection if it exists
+                                    $items = $get('items') ?? [];
+                                    foreach ($items as $index => $item) {
+                                        if ($is_dollar) {
+                                            // Convert to USD
+                                            $usd = Settings::get('current_dollar');
+                                            if ($usd && $usd != 0) {
+                                                $price_dollar = $item['price_rupiah'] / $usd;
+                                                $amount_dollar = $price_dollar * ($item['quantity'] ?? 1);
+                                                
+                                                $set("items.{$index}.price_dollar", $price_dollar);
+                                                $set("items.{$index}.amount_dollar", $amount_dollar);
+                                            }
+                                        } else {
+                                            // Convert to IDR
+                                            $usd = Settings::get('current_dollar');
+                                            if ($usd && $usd != 0) {
+                                                $price_rupiah = $item['price_dollar'] * $usd;
+                                                $amount_rupiah = $price_rupiah * ($item['quantity'] ?? 1);
+                                                
+                                                $set("items.{$index}.price_rupiah", $price_rupiah);
+                                                $set("items.{$index}.amount_rupiah", $amount_rupiah);
+                                            }
+                                        }
+                                    }
+                                    
+                                    Notification::make()
+                                        ->title('Currency Updated')
+                                        ->body('Currency has been changed to ' . ($state ? 'USD' : 'IDR'))
+                                        ->success()
+                                        ->send();
+                                })
+                                ->columnSpan(1),
+                        ])
+                        ->columns(4),
+
                     Group::make()
                         ->schema([
                             TextInput::make("current_dollar")
@@ -144,26 +187,12 @@ class InvoiceResource extends Resource
                                             }
                                         })
                                 )
-                                ->columnSpan(4),
-
-                            Select::make('is_dollar')
-                                ->label('Currency')
-                                ->options([
-                                    0 => 'IDR (Rupiah)',
-                                    1 => 'USD (Dollar)'
-                                ])
-                                ->default(0)
-                                ->live()
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    $set('is_dollar', (bool) $state);
-                                })
                                 ->columnSpan(2),
                         ])
-                        ->columns(6),
+                        ->columns(2),
                 ])
                 ->columns(1),
 
-            // Items Section
             Section::make("Items")
                 ->description("Add invoice items")
                 ->icon("heroicon-o-shopping-cart")
@@ -174,9 +203,9 @@ class InvoiceResource extends Resource
                             TextInput::make("name")
                                 ->required()
                                 ->live()
-                                ->columnSpan(3),
+                                ->columnSpan(2),
                             TextInput::make("description")
-                                ->columnSpan(3),
+                                ->columnSpan(2),
                             TextInput::make("quantity")
                                 ->default(1)
                                 ->live()
@@ -184,51 +213,53 @@ class InvoiceResource extends Resource
                                 ->minValue(1)
                                 ->required()
                                 ->suffix("unit")
-                                ->columnSpan(2),
+                                ->columnSpan(1),
                             TextInput::make("price_rupiah")
-                                ->label("Harga (IDR)")
+                                ->label(fn ($get) => $get('../../is_dollar') ? "Price (USD)" : "Price (IDR)")
                                 ->live()
                                 ->required()
                                 ->numeric()
-                                ->prefix("Rp")
+                                ->prefix(fn ($get) => $get('../../is_dollar') ? '$' : 'Rp')
+                                ->visible(fn ($get) => !$get('../../is_dollar'))
                                 ->afterStateUpdated(function (callable $set, $state, $get) {
                                     $quantity = $get("quantity") ?? 1;
-                                    // Calculate and set amount_rupiah
                                     $set("amount_rupiah", $state * $quantity);
                                     
-                                    // Calculate USD values if needed
                                     $usd = Settings::get('current_dollar');
                                     if ($usd && $usd != 0) {
                                         $set("price_dollar", $state / $usd);
                                         $set("amount_dollar", ($state * $quantity) / $usd);
-                                    } else {
-                                        $set("price_dollar", 0);
-                                        $set("amount_dollar", 0);
                                     }
                                 })
-                                ->columnSpan(3),
+                                ->columnSpan(2),
                             TextInput::make("price_dollar")
-                                ->label("Harga (USD)")
+                                ->label("Price (USD)")
                                 ->live()
+                                ->required()
                                 ->numeric()
                                 ->prefix('$')
-                                ->hidden(fn (Get $get) => !$get('../../is_dollar'))
-                                ->columnSpan(3),
+                                ->visible(fn ($get) => $get('../../is_dollar'))
+                                ->afterStateUpdated(function (callable $set, $state, $get) {
+                                    $quantity = $get("quantity") ?? 1;
+                                    $set("amount_dollar", $state * $quantity);
+                                    
+                                    $usd = Settings::get('current_dollar');
+                                    if ($usd && $usd != 0) {
+                                        $set("price_rupiah", $state * $usd);
+                                        $set("amount_rupiah", ($state * $quantity) * $usd);
+                                    }
+                                })
+                                ->columnSpan(2),
                             TextInput::make("amount_rupiah")
                                 ->label("Total (IDR)")
                                 ->prefix("Rp")
                                 ->required()
                                 ->default(0)
-                                ->columnSpan(3),
-                            TextInput::make("amount_dollar")
-                                ->label("Total (USD)")
-                                ->prefix('$')
-                                ->hidden(fn (Get $get) => !$get('../../is_dollar'))
-                                ->columnSpan(3),
+                                ->columnSpan(2),
                         ])
                         ->defaultItems(1)
                         ->columnSpanFull()
-                        ->columns(12)
+                        ->columns(6)
                         ->collapsible()
                         ->cloneable()
                         ->itemLabel(fn(array $state): ?string => $state["name"] ?? null),
@@ -243,15 +274,25 @@ class InvoiceResource extends Resource
                 TextColumn::make("customer.nama")
                     ->label("Customer Name")
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('bold')
+                    ->size('lg')
+                    ->translateLabel(),
+
                 TextColumn::make("invoice_date")
                     ->label("Invoice Date")
                     ->date("d/m/Y")
-                    ->sortable(),
+                    ->sortable()
+                    ->color('gray')
+                    ->translateLabel(),
+
                 TextColumn::make("item_count")
                     ->label("Total Items")
                     ->counts("item")
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter()
+                    ->size('lg'),
+
                 TextColumn::make("item.amount_rupiah")
                     ->label("Amount (IDR/USD)")
                     ->description(function (Invoice $record): string {
@@ -262,9 +303,10 @@ class InvoiceResource extends Resource
                     })
                     ->formatStateUsing(function ($state, Invoice $record) {
                         $total_rupiah = $record->item()->sum("amount_rupiah");
-                        return "Rp. " .
-                            number_format($total_rupiah, 0, ",", ".");
+                        return "Rp. " . number_format($total_rupiah, 0, ",", ".");
                     })
+                    ->size('l')
+                    ->color('success')
                     ->sortable(
                         query: function (
                             Builder $query,
@@ -276,22 +318,77 @@ class InvoiceResource extends Resource
                             );
                         }
                     ),
+
                 TextColumn::make('status')
                     ->badge()
+                    ->size('lg')
                     ->color(fn (string $state): string => match ($state) {
                         'paid' => 'success',
                         'cancelled' => 'danger',
                         default => 'warning',
                     })
+                    ->icon(fn (string $state): string => match ($state) {
+                        'paid' => 'heroicon-o-check-circle',
+                        'cancelled' => 'heroicon-o-x-circle',
+                        default => 'heroicon-o-clock',
+                    })
                     ->sortable(),
+
+                TextColumn::make("due_date")
+                    ->label("Due Date")
+                    ->date("d/m/Y")
+                    ->sortable()
+                    ->color('gray')
+                    ->translateLabel(),
+
+                TextColumn::make("current_dollar")
+                    ->label("Exchange Rate")
+                    ->formatStateUsing(fn ($state) => $state ? "Rp. " . number_format($state, 0, ",", ".") : "-")
+                    ->visible(function (?Invoice $record): bool {
+                        if (!$record) return false;
+                        return $record->is_dollar;
+                    })
+                    ->size('sm'),
+
+                TextColumn::make("created_at")
+                    ->label("Created")
+                    ->dateTime("d/m/Y H:i")
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make("updated_at")
+                    ->label("Last Updated")
+                    ->dateTime("d/m/Y H:i")
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->striped()
+            ->defaultSort('invoice_date', 'desc')
+            ->poll('60s')
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->icon("heroicon-o-pencil"),
-                GeneratePdfAction::make(),
-                SendInvoiceAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->icon("heroicon-o-pencil")
+                    ->color('info')
+                    ->tooltip('Edit')
+                    ->label('')
+                    ->size('md'),
+                
+                GeneratePdfAction::make()
+                    ->icon("heroicon-o-document-arrow-down")
+                    ->color('success')
+                    ->tooltip('PDF')
+                    ->label('')
+                    ->size('md'),
+                
+                SendInvoiceAction::make()
+                    ->icon("heroicon-o-paper-airplane")
+                    ->color('primary')
+                    ->tooltip('Send')
+                    ->label('')
+                    ->size('md'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make(

@@ -25,10 +25,10 @@
         .header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
-            padding: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
             background: var(--primary-light);
-            border-radius: 6px;
+            border-radius: 8px;
         }
         .logo {
             max-width: 100px;
@@ -47,9 +47,25 @@
             padding: 10px;
             border-radius: 6px;
         }
-        .invoice-details, .customer-details {
+        .invoice-left {
+            width: 300px;
+            text-align: left;
+        }
+        .invoice-right {
+            width: 300px;
+            text-align: right;
+        }
+        .invoice-details {
             font-size: 10px;
-            width: 48%;
+            width: 300px;
+            text-align: right;
+            margin-left: auto;
+            padding-right: 20px;
+        }
+        .customer-details {
+            font-size: 10px;
+            width: 300px;
+            text-align: right;
         }
         .status-badge {
             display: inline-block;
@@ -109,20 +125,24 @@
             border-bottom: 1px solid #e2e8f0;
         }
         .total-section {
-            width: 200px;
-            float: right;
-            margin-top: 8px;
-            background: var(--primary-light);
-            padding: 8px;
-            border-radius: 6px;
+            width: 300px;
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            margin-left: auto;
         }
         .total-section table {
             font-size: 9px;
             margin: 0;
+            width: 100%;
         }
         .total-section td {
             border: none;
             padding: 3px 6px;
+            text-align: right;
+        }
+        .total-section td:first-child {
+            text-align: left;
         }
         .total-row {
             font-weight: bold;
@@ -145,6 +165,7 @@
             color: var(--secondary-color);
             margin-top: 5px;
             font-style: italic;
+            text-align: right;
         }
         .section-title {
             color: var(--primary-color);
@@ -154,15 +175,17 @@
         }
         .company-name {
             color: var(--primary-color);
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
-            margin: 3px 0;
+            margin: 5px 0;
+            letter-spacing: 0.5px;
         }
         .invoice-number {
             color: var(--primary-color);
             font-size: 14px;
             font-weight: bold;
             margin: 0 0 5px 0;
+            text-align: right;
         }
         p {
             margin: 2px 0;
@@ -199,6 +222,141 @@
         .table-header-value {
             font-size: 10px;
         }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .items-table th {
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 6px;
+            text-align: left;
+            border: 1px solid #1e293b;
+        }
+        .items-table td {
+            padding: 8px 6px;
+            border: 1px solid #e2e8f0;
+        }
+        .items-table tr:nth-child(even) {
+            background-color: var(--accent-color);
+        }
+        .items-table {
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .items-table th:first-child {
+            border-top-left-radius: 6px;
+        }
+        .items-table th:last-child {
+            border-top-right-radius: 6px;
+        }
+        .invoice-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin: 20px 0;
+        }
+        .bill-section {
+            width: 40%;
+            text-align: left;
+        }
+        .invoice-details-section {
+            width: 40%;
+            text-align: right;
+        }
+        .invoice-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            margin-left: 8px;
+        }
+        .invoice-header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin: 20px 0;
+        }
+        .bill-section {
+            text-align: left;
+        }
+        .invoice-details {
+            text-align: right;
+        }
+        .invoice-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 5px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            margin-left: 8px;
+        }
+        .bill-section {
+            text-align: left;
+            margin: 20px 0;
+        }
+        .invoice-header {
+            text-align: right;
+            margin: 20px 0;
+        }
+        .invoice-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: inline-flex;
+            align-items: center;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            margin-left: 8px;
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .header-table {
+            width: 100%;
+            margin: 20px 0;
+            border: none;
+        }
+        .header-table td {
+            vertical-align: top;
+            border: none;
+            padding: 0;
+        }
+        .header-table .left-col {
+            text-align: left;
+            width: 50%;
+        }
+        .header-table .right-col {
+            text-align: right;
+            width: 50%;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            margin-left: 8px;
+            background-color: #fff3cd;
+            color: #856404;
+        }
     </style>
 </head>
 <body>
@@ -217,22 +375,25 @@
             </div>
         </div>
 
-        <div class="invoice-header">
-            <div class="invoice-details">
-                <h1 class="invoice-number">
-                    INVOICE #{{ str_pad($invoice->id, 6, '0', STR_PAD_LEFT) }}
-                    <span class="status-badge status-{{ $invoice->status }}">{{ ucfirst($invoice->status) }}</span>
-                </h1>
-                <p><strong>Invoice Date:</strong> {{ date('d/m/Y', strtotime($invoice->invoice_date)) }}</p>
-                <p><strong>Due Date:</strong> {{ date('d/m/Y', strtotime($invoice->due_date)) }}</p>
-            </div>
-            <div class="customer-details">
-                <div class="section-title">Bill To:</div>
-                <p style="font-weight: 600;">{{ $invoice->customer->nama }}</p>
-                <p>Email: {{ $invoice->customer->email }}</p>
-                <p>Phone: {{ $invoice->customer->phone }}</p>
-            </div>
-        </div>
+        <table class="header-table">
+            <tr>
+                <td class="left-col">
+                    <div class="section-title">Bill To:</div>
+                    <p>{{ $invoice->customer->nama }}</p>
+                    <p>Email: {{ $invoice->customer->email }}</p>
+                    <p>Phone: {{ $invoice->customer->phone }}</p>
+                </td>
+                <td class="right-col">
+                    <div class="invoice-title">
+                        INVOICE #{{ str_pad($invoice->id, 6, '0', STR_PAD_LEFT) }}
+                        <span class="status-badge">{{ ucfirst($invoice->status) }}</span>
+                    </div>
+                    <p>Invoice Date: {{ date('d/m/Y', strtotime($invoice->invoice_date)) }}</p>
+                    <p>Due Date: {{ date('d/m/Y', strtotime($invoice->due_date)) }}</p>
+                </td>
+            </tr>
+        </table>
+
         <table class="items-table">
             <thead>
                 <tr>

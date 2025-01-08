@@ -12,6 +12,7 @@ use Filament\Forms\Form;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Textarea;
 
 class EditSettings extends Page implements HasForms
 {
@@ -29,6 +30,11 @@ class EditSettings extends Page implements HasForms
             'company_phone' => Settings::get('company_phone'),
             'company_address' => Settings::get('company_address'),
             'company_logo' => Settings::get('company_logo'),
+            'current_dollar' => Settings::get('current_dollar'),
+            'company_moto' => Settings::get('company_moto'),
+            'company_vision' => Settings::get('company_vision'),
+            'company_description' => Settings::get('company_description'),
+            'company_social_media' => Settings::get('company_social_media'),
         ];
         
         $this->form->fill($settings);
@@ -38,27 +44,47 @@ class EditSettings extends Page implements HasForms
     {
         return $form
             ->schema([
-                Section::make('Company Information')
+                Section::make('Main Information')
                     ->schema([
-                        TextInput::make('company_name')
-                            ->label('Company Name')
-                            ->required(),
-                        TextInput::make('company_email')
-                            ->label('Company Email')
-                            ->email()
-                            ->required(),
-                        TextInput::make('company_phone')
-                            ->label('Company Phone')
-                            ->tel(),
-                        TextInput::make('company_address')
-                            ->label('Company Address')
-                            ->columnSpan('full'),
-                        FileUpload::make('company_logo')
-                            ->label('Company Logo')
-                            ->image()
-                            ->directory('company-logos'),
+                        Section::make('Company Bio')
+                            ->schema([
+                                TextInput::make('company_name')
+                                    ->label('Company Name')
+                                    ->columnSpan(1),
+                                FileUpload::make('company_logo')
+                                    ->label('Company Logo')
+                                    ->image()
+                                    ->directory('company-logos')
+                                    ->columnSpan(1),
+                                Textarea::make('company_description')
+                                    ->label('Company Description')
+                                    ->autosize()
+                                    ->columnSpan(2),
+                                Textarea::make('company_moto')
+                                    ->label('Company Moto')
+                                    ->autosize()
+                                    ->columnSpan(1),
+                                Textarea::make('company_vision')
+                                    ->label('Company Vision')
+                                    ->autosize()
+                                    ->columnSpan(1),
+                            ])
+                            ->columns(2),
+                        Section::make('Company Contact')
+                            ->schema([
+                                Textarea::make('company_address')
+                                    ->label('Company Address')
+                                    ->autosize()
+                                    ->columnSpan(2),
+                                Textarea::make('company_social_media')
+                                    ->label('Company Social Media')
+                                    ->json()
+                                    ->autosize()
+                                    ->columnSpan(2),
+                            ])
+                            ->columns(2),
                     ])
-                    ->columns(2)
+                    ->columns(1),
             ])
             ->statePath('data');
     }
