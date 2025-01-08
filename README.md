@@ -77,12 +77,28 @@
 
 ## 📁 Struktur Aplikasi
 
-- 🏗️ `app/`: Kode aplikasi utama
-- 🎨 `resources/views/`: Template tampilan
-- 🗄️ `database/migrations/`: File migrasi database
-- 🌱 `database/seeders/`: File seeder untuk mengisi data awal
-- 📂 `public/`: Aset publik
-- 🛣️ `routes/`: Definisi rute aplikasi
+- 🏗️ `app/`: Kode aplikasi utama, termasuk model, controller, dan resource.
+  - `Filament/Resources/`: Resource untuk Filament, seperti `InvoiceResource`.
+    - `Actions/`: Tindakan khusus untuk resource, seperti `GeneratePdfAction`.
+  - `Filament/Widgets/`: Widget untuk Filament, seperti `StatsOverview`.
+  - `Mail/`: Kelas untuk mengirim email, seperti `InvoiceMail`.
+- 🎨 `resources/views/`: Template tampilan, termasuk file Blade untuk tampilan web.
+  - `invoices/`: Template untuk faktur, seperti `pdf.blade.php` dan `send.blade.php`.
+- 🗄️ `database/migrations/`: File migrasi database untuk membuat tabel.
+  - `2024_11_20_080724_create_companies_table.php`: Menciptakan tabel perusahaan.
+  - `2024_11_20_090713_create_customers_table.php`: Menciptakan tabel pelanggan.
+  - `2024_11_20_092543_create_items_table.php`: Menciptakan tabel item.
+- 🌱 `database/seeders/`: File seeder untuk mengisi data awal.
+  - `CustomerSeeder.php`: Seeder untuk data pelanggan.
+  - `InvoicesSeeder.php`: Seeder untuk data faktur.
+- 📂 `public/`: Aset publik seperti CSS, JavaScript, dan gambar.
+  - `css/`: File CSS untuk tema dan tampilan.
+  - `js/`: File JavaScript untuk interaktivitas.
+- 🛣️ `routes/`: Definisi rute aplikasi.
+  - `web.php`: Rute untuk aplikasi web.
+- 📦 `config/`: Konfigurasi aplikasi, termasuk `app.php` dan `filesystems.php`.
+- 📜 `composer.json`: File konfigurasi Composer untuk dependensi PHP.
+- 📜 `package.json`: File konfigurasi npm untuk dependensi JavaScript.
 
 ## 💾 Struktur Database
 
