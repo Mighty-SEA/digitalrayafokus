@@ -1,88 +1,114 @@
-# 🚀 Sistem Manajemen Faktur Modern
+# 📊 Sistem Manajemen Faktur
 
-Solusi manajemen faktur yang canggih dan lengkap, dibangun dengan Laravel dan Panel Admin Filament untuk memudahkan pengelolaan bisnis Anda.
+> Solusi manajemen faktur modern untuk PT. Digital Raya Fokus, dibangun dengan Laravel & Filament Admin Panel untuk pengalaman pengguna yang optimal.
 
 ## ✨ Fitur Unggulan
 
-### 📄 Manajemen Faktur Super Praktis
-- Buat dan edit faktur dengan mudah dan cepat
-- Mendukung IDR & USD dengan konversi otomatis
-- Perhitungan jatuh tempo yang akurat
-- Ekspor PDF dan kirim email dalam sekali klik
-- Fitur aksi massal yang efisien
+### 💼 Manajemen Faktur
+- ⚡️ Buat & edit faktur secara instan dengan UI yang intuitif
+- 🌏 Dukungan multi-mata uang (IDR & USD) 
+- 📄 Ekspor ke PDF dengan satu klik
 
-### 👥 Manajemen Pelanggan Terpadu
-- Database pelanggan yang terorganisir
-- Tambah pelanggan baru secara instan
-- Kelola informasi lengkap pelanggan
-- Pantau riwayat transaksi dengan mudah
-- Pembaruan data pelanggan yang fleksibel
+### 👥 Manajemen Pelanggan
+- 🔍 Pencarian & filter pelanggan yang powerful
+- 📊 Analisis riwayat transaksi komprehensif
+- 💫 Database pelanggan yang terorganisir
 
-### 📦 Manajemen Item yang Powerful
-- Dukung multiple item dalam satu faktur
-- Kalkulasi otomatis yang akurat
-- Harga dalam IDR dan USD
-- Pantau stok dengan mudah
-- Kelola inventaris secara efisien
+### 📝 Manajemen Item
+- 🧮 Kalkulasi otomatis harga & total
+- ➕ Fitur repeater yang fleksibel
+- 📦 Pengelolaan item yang efisien
 
-### 💰 Fitur Keuangan Canggih
-- Konversi mata uang real-time
-- Perhitungan otomatis yang akurat
-- Dukungan multi-mata uang
-- Monitor nilai tukar terkini
-- Laporan keuangan komprehensif
+### 💰 Fitur Keuangan
+- 💱 Konversi mata uang real-time
+- 📈 Laporan keuangan detail
+- 🎯 Analisis bisnis mendalam
 
-### 📊 Ekspor & Pelaporan Lengkap
-- Generate PDF profesional
-- Sistem email terintegrasi
-- Ekspor data ke Excel
-- Statistik yang informatif
-- Laporan penjualan detail
+### 📤 Ekspor & Pelaporan
+- 📊 Ekspor ke PDF & Excel
+- 📧 Sistem email terintegrasi
+- 📑 Dokumentasi yang rapi
 
-### 📈 Dasbor & Analitik Interaktif
-- Pantau performa bisnis
-- Analisis tingkat pembatalan
-- Monitor rasio pembayaran
-- Visualisasi data penjualan
-- Analisis tren bisnis
+### 📊 Dasbor & Analitik
+- 📈 Visualisasi data yang informatif
+- 📉 Analisis tren penjualan
+- 🎯 Insights bisnis yang akurat
 
-## 🛠️ Teknologi yang Digunakan
+## 🛠 Tech Stack
 
-### Backend Handal
-- Laravel 11 - Framework PHP terpopuler
-- PHP 8.2 - Performa tinggi
-- Database MySQL - Penyimpanan data yang andal
-- Panel Admin Filament v3.2 - Antarmuka admin modern
+### Backend
+- 🚀 Laravel 11
+- ⚡️ PHP 8.2
+- 🗄 MySQL
 
-### Frontend Modern
-- Tailwind CSS - Desain responsif
-- Livewire - Interaksi dinamis
-- Alpine.js - JavaScript ringan
+### Frontend
+- 🎨 Tailwind CSS
+- ⚡️ Livewire
+- 🔄 Alpine.js
 
-### Paket Pendukung
-- barryvdh/laravel-dompdf: Generator PDF
-- filament/notifications: Sistem notifikasi
-- hasnayeen/themes: Kustomisasi tema
+### Packages
+- 📄 barryvdh/laravel-dompdf
+- 🔔 filament/notifications
+- 🎨 hasnayeen/themes
 
-### 📝 Cara Membuat Faktur
-1. Buka menu Faktur
-2. Klik "Buat Faktur Baru"
-3. Isi data pelanggan
-4. Tambahkan item faktur
-5. Pilih mata uang
-6. Simpan dan generate PDF
+## 🚀 Panduan Penggunaan
 
-### 📧 Pengiriman Faktur
-- Kirim individual dengan satu klik
-- Fitur pengiriman massal
-- Generate PDF otomatis
-- Template email yang dapat disesuaikan
+### Membuat Faktur Baru
+1. 📂 Akses menu Faktur
+2. ➕ Klik "Buat Faktur Baru"
+3. ✍️ Isi informasi pelanggan & item
+4. 💾 Pilih mata uang & simpan
 
-## 🤝 Kontribusi
+### Pengiriman Faktur
+- 📧 Kirim faktur individual/massal
+- ✨ Template email yang customizable
 
-1. Fork repositori
-2. Buat branch fitur
-3. Commit perubahan
-4. Push ke branch
-5. Buat Pull Request
+## 🔄 Alur Kerja
 
+1. 🔐 **Login**: Autentikasi pengguna
+2. 👥 **Kelola Pelanggan**: CRUD operasi
+3. 📝 **Buat Faktur**:
+   - 👤 Pilih pelanggan
+   - 📦 Tambah item
+   - 💰 Set mata uang
+4. 📤 **Ekspor**: Generate PDF
+5. 📧 **Kirim**: Email ke pelanggan
+6. 📊 **Analisis**: Review statistik
+
+## 📁 Struktur Aplikasi
+
+- 🏗️ `app/`: Kode aplikasi utama
+- 🎨 `resources/views/`: Template tampilan
+- 🗄️ `database/migrations/`: File migrasi database
+- 🌱 `database/seeders/`: File seeder untuk mengisi data awal
+- 📂 `public/`: Aset publik
+- 🛣️ `routes/`: Definisi rute aplikasi
+
+## 💾 Struktur Database
+
+### 👥 Tabel Customers
+Menyimpan data pelanggan
+- 🔑 `id`: Primary key
+- 👤 `nama`: Nama pelanggan
+- 📧 `email`: Email pelanggan  
+- 📱 `phone`: Nomor telepon pelanggan
+
+### 📄 Tabel Invoices 
+Menyimpan data faktur
+- 🔑 `id`: Primary key
+- 🔗 `customer_id`: Foreign key ke tabel customers
+- 📅 `invoice_date`: Tanggal faktur
+- ⏰ `due_date`: Tanggal jatuh tempo
+- 💱 `is_dollar`: Indikator mata uang
+
+### 📦 Tabel Items
+Menyimpan data item dalam faktur
+- 🔑 `id`: Primary key
+- 🔗 `invoice_id`: Foreign key ke tabel invoices
+- 📝 `name`: Nama item
+- 📋 `description`: Deskripsi item
+- 🔢 `quantity`: Kuantitas item
+- 💰 `price_rupiah`: Harga dalam IDR
+- 💵 `price_dollar`: Harga dalam USD
+- 💸 `amount_rupiah`: Total harga dalam IDR
+- 💲 `amount_dollar`: Total harga dalam USD
