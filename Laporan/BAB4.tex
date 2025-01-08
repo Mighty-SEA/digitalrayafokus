@@ -1,0 +1,243 @@
+\documentclass[a4paper]{report}
+\usepackage{graphicx}
+\usepackage{times} 
+\usepackage[left=3cm,right=2.5cm,top=3cm,bottom=2.5cm]{geometry}
+
+\begin{document}
+
+\chapter{Pelaksanaan Kerja Praktek}
+
+\section{Perancangan Sistem}
+\subsection{Desain Antarmuka}
+Desain antarmuka aplikasi manajemen faktur dirancang dengan mempertimbangkan kemudahan 
+penggunaan dan efisiensi. Antarmuka utama terdiri dari beberapa komponen:
+
+\begin{enumerate}
+\item \textbf{Dashboard:} Menampilkan ringkasan statistik dan informasi penting seperti 
+total faktur, status pembayaran, dan grafik tren. Dashboard ini dirancang untuk memberikan 
+gambaran cepat kepada pengguna tentang kinerja bisnis mereka. Komponen ini menggunakan 
+grafik interaktif yang dapat diubah ukurannya dan disesuaikan dengan kebutuhan pengguna.
+
+\item \textbf{Manajemen Pelanggan:} Antarmuka untuk mengelola data pelanggan dengan fitur 
+pencarian, penambahan, dan pengubahan data. Fitur ini memungkinkan pengguna untuk dengan 
+mudah mencari pelanggan berdasarkan nama atau email, serta menambah atau mengedit 
+informasi pelanggan dengan cepat.
+
+\item \textbf{Manajemen Faktur:} Tampilan untuk membuat dan mengelola faktur dengan form 
+yang intuitif dan tabel yang informatif. Formulir ini dirancang untuk meminimalkan 
+kesalahan input dengan validasi real-time dan auto-complete untuk beberapa field.
+
+\item \textbf{Pengaturan:} Panel untuk mengonfigurasi pengaturan aplikasi dan informasi 
+perusahaan. Pengguna dapat mengubah informasi perusahaan, seperti nama, alamat, dan logo, 
+yang akan tercermin di semua faktur yang dihasilkan.
+\end{enumerate}
+
+\subsection{Desain Database}
+Aplikasi manajemen faktur ini memiliki beberapa entitas utama yang saling terhubung, yang 
+dapat digambarkan dalam sebuah Entity-Relationship Diagram (ERD). Berikut adalah 
+penjelasan mengenai entitas dan koneksinya:
+
+\begin{enumerate}
+\item \textbf{Users:} Tabel users menyimpan informasi pengguna yang dapat mengakses 
+aplikasi. Setiap pengguna memiliki atribut seperti name, email, dan password. Tabel ini 
+juga berhubungan dengan tabel sessions untuk melacak sesi pengguna dan 
+password\_reset\_tokens untuk mengelola reset kata sandi.
+
+\item \textbf{Customers:} Tabel customers menyimpan data pelanggan, termasuk nama, email, 
+dan phone. Setiap pelanggan dapat memiliki banyak faktur (invoices), yang dihubungkan 
+melalui customer\_id.
+
+\item \textbf{Invoices:} Tabel invoices menyimpan informasi faktur, seperti invoice\_date, 
+due\_date, email\_receiver, dan status. Setiap faktur terhubung ke satu pelanggan melalui 
+customer\_id dan dapat memiliki banyak item (items), yang dihubungkan melalui invoice\_id.
+
+\item \textbf{Items:} Tabel items menyimpan detail item yang termasuk dalam faktur, 
+seperti name, description, quantity, price\_rupiah, dan price\_dollar. Setiap item 
+terhubung ke satu faktur melalui invoice\_id.
+
+\item \textbf{Exports:} Tabel exports mencatat informasi tentang ekspor data, termasuk 
+file\_name, exporter, dan user\_id. Setiap ekspor terhubung ke pengguna yang melakukan 
+ekspor melalui user\_id.
+
+\item \textbf{Settings:} Tabel settings menyimpan pengaturan aplikasi, seperti 
+company\_name, company\_email, dan company\_phone. Pengaturan ini digunakan di berbagai 
+bagian aplikasi untuk menampilkan informasi perusahaan.
+
+\item \textbf{Sessions:} Tabel sessions melacak sesi pengguna, menyimpan informasi seperti 
+user\_id, ip\_address, dan last\_activity. Ini memungkinkan aplikasi untuk mengelola sesi 
+pengguna dengan lebih baik.
+
+\item \textbf{Password Reset Tokens:} Tabel password\_reset\_tokens menyimpan token reset 
+kata sandi untuk pengguna, memungkinkan mereka untuk mengatur ulang kata sandi mereka jika 
+diperlukan.
+\end{enumerate}
+
+\section{Flowchart Basis Data}
+Flowchart basis data menggambarkan alur data dalam aplikasi manajemen faktur:
+
+\begin{enumerate}
+\item \textbf{Input Data Pelanggan:}
+    \begin{itemize}
+    \item Pengguna memasukkan data pelanggan baru
+    \item Data disimpan dalam tabel customers
+    \item Sistem melakukan validasi data
+    \end{itemize}
+
+\item \textbf{Pembuatan Faktur:}
+    \begin{itemize}
+    \item Pemilihan pelanggan dari database
+    \item Input detail faktur
+    \item Penambahan item-item faktur
+    \item Kalkulasi otomatis total dalam IDR dan USD
+    \end{itemize}
+
+\item \textbf{Penyimpanan dan Pemrosesan:}
+    \begin{itemize}
+    \item Data faktur disimpan dalam tabel invoices
+    \item Item-item disimpan dalam tabel items
+    \item Update status pembayaran
+    \end{itemize}
+\end{enumerate}
+
+\section{Sequence Diagram}
+\sloppy
+Sequence diagram menunjukkan interaksi antar komponen sistem dengan lebih rinci sebagai 
+berikut:
+
+\begin{enumerate}
+\item \textbf{Proses Autentikasi:}
+    \begin{itemize}
+    \item \textbf{User melakukan login:}
+        \begin{itemize}
+        \item Pengguna memasukkan username dan password ke dalam form login.
+        \item Form mengirimkan data kredensial ke server melalui permintaan HTTP POST.
+        \end{itemize}
+    \item \textbf{Sistem memverifikasi kredensial:}
+        \begin{itemize}
+        \item Server menerima data kredensial dan memulai proses verifikasi.
+        \item Sistem mencari username di tabel \texttt{users} dalam database.
+        \item Jika username ditemukan, sistem memverifikasi password yang dimasukkan 
+        dengan password yang disimpan menggunakan hashing.
+        \item Jika verifikasi berhasil, sistem melanjutkan ke pembuatan sesi. Jika gagal, 
+        sistem mengirimkan respons kesalahan.
+        \end{itemize}
+    \item \textbf{Membuat sesi pengguna:}
+        \begin{itemize}
+        \item Sistem membuat sesi baru dengan menyimpan \texttt{user\_id}, 
+        \texttt{ip\_address}, dan \texttt{last\_activity} ke tabel \texttt{sessions}.
+        \item Sistem mengirimkan cookie sesi ke browser pengguna.
+        \item Pengguna diarahkan ke dashboard utama aplikasi.
+        \end{itemize}
+    \end{itemize}
+
+\item \textbf{Pembuatan Faktur:}
+    \begin{itemize}
+    \item \textbf{User memilih create invoice:}
+        \begin{itemize}
+        \item Pengguna mengklik tombol "Create Invoice" di dashboard.
+        \item Sistem menyiapkan form pembuatan faktur.
+        \end{itemize}
+    \item \textbf{Sistem menampilkan form:}
+        \begin{itemize}
+        \item Sistem merender form dengan field untuk memilih pelanggan, memasukkan 
+        tanggal faktur, dan menambahkan item.
+        \item Sistem memuat data pelanggan yang tersedia untuk dipilih.
+        \end{itemize}
+    \item \textbf{User mengisi detail faktur:}
+        \begin{itemize}
+        \item Pengguna memasukkan informasi yang diperlukan, seperti memilih pelanggan, 
+        menambahkan item, dan menentukan tanggal jatuh tempo.
+        \item Sistem melakukan validasi real-time.
+        \end{itemize}
+    \item \textbf{Sistem memvalidasi dan menyimpan:}
+        \begin{itemize}
+        \item Sistem memeriksa semua input untuk memastikan tidak ada kesalahan.
+        \item Jika validasi berhasil, sistem menyimpan data faktur ke tabel 
+        \texttt{invoices} dan item ke tabel \texttt{items}.
+        \item Sistem mengirimkan konfirmasi ke antarmuka pengguna.
+        \end{itemize}
+    \end{itemize}
+
+\item \textbf{Pengiriman Faktur:}
+    \begin{itemize}
+    \item \textbf{User memilih send invoice:}
+        \begin{itemize}
+        \item Pengguna memilih faktur yang ingin dikirim dan mengklik opsi untuk mengirim 
+        faktur.
+        \end{itemize}
+    \item \textbf{Sistem generate PDF:}
+        \begin{itemize}
+        \item Sistem menggunakan library PDF untuk merender tampilan faktur menjadi file 
+        PDF.
+        \item PDF disimpan sementara di server.
+        \end{itemize}
+    \item \textbf{Sistem mengirim email:}
+        \begin{itemize}
+        \item Sistem menyiapkan email dengan lampiran PDF dan detail penerima.
+        \item Sistem menggunakan layanan email untuk mengirim email ke penerima.
+        \item Sistem mencatat aktivitas pengiriman email dalam log.
+        \end{itemize}
+    \item \textbf{Update status pengiriman:}
+        \begin{itemize}
+        \item Sistem memeriksa apakah email berhasil dikirim.
+        \item Jika berhasil, sistem memperbarui status faktur menjadi "sent" di tabel 
+        \texttt{invoices}.
+        \item Sistem mengirimkan notifikasi ke pengguna.
+        \end{itemize}
+    \end{itemize}
+\end{enumerate}
+
+\section{Activity Diagram}
+Activity diagram menggambarkan alur kerja sistem:
+
+\begin{enumerate}
+\item \textbf{Login dan Autentikasi:}
+    \begin{itemize}
+    \item Input kredensial
+    \item Verifikasi user
+    \item Akses dashboard
+    \end{itemize}
+
+\item \textbf{Manajemen Faktur:}
+    \begin{itemize}
+    \item Pembuatan faktur baru
+    \item Pengeditan faktur
+    \item Pengiriman ke pelanggan
+    \item Pemantauan status
+    \end{itemize}
+
+\item \textbf{Pengelolaan Data:}
+    \begin{itemize}
+    \item Manajemen pelanggan
+    \item Update pengaturan
+    \item Ekspor data
+    \end{itemize}
+\end{enumerate}
+
+\section{Sistem Basis Data untuk Faktur}
+Sistem basis data faktur dirancang dengan mempertimbangkan:
+
+\begin{enumerate}
+\item \textbf{Integritas Data:}
+    \begin{itemize}
+    \item Penggunaan foreign keys
+    \item Validasi input
+    \item Konsistensi data
+    \end{itemize}
+
+\item \textbf{Performa:}
+    \begin{itemize}
+    \item Indeks optimal
+    \item Query yang efisien
+    \item Caching strategis
+    \end{itemize}
+
+\item \textbf{Keamanan:}
+    \begin{itemize}
+    \item Enkripsi data sensitif
+    \item Manajemen akses
+    \item Audit trail
+    \end{itemize}
+\end{enumerate}
+
+\end{document}
