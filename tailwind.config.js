@@ -11,10 +11,24 @@ export default {
     ],
     theme: {
         extend: {
-            fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
-            },
+          colors: {
+            'biru': '#4F98CA',
+            'mint': '#00FFCA',
+            'head': '#088395',
+            'foot': '#0A4D68',
+            green: {
+              500: '#22c55e',
+          },
+          },
+          transitionDuration: {
+            '300': '300ms',
+            '500': '500ms',
         },
-    },
+          fontFamily: {
+            // Menetapkan Open Sans sebagai font default untuk semua elemen yang menggunakan `font-sans`
+            sans: ['Figtree', 'Open Sans', 'sans-serif'],
+          },
+        },
+      },
     plugins: [],
 };

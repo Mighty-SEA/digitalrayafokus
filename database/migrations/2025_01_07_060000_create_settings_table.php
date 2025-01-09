@@ -26,7 +26,7 @@ return new class extends Migration
             'company_email' => 'idigitalrayafokus@gmail.com',
             'company_phone' => '+62 896-9605-9684',
             'company_address' => 'Kapten Sarwono No.32, Banjaran Wetan, Kec. Banjaran, Kabupaten Bandung, Jawa Barat 40377 Indonesia',
-            'company_logo' => 'https://febri.minty.my.id/asset/logo.png',
+            'company_logo' => 'asset/logo.png',
             'current_dollar' => '15000',
             'company_moto' => 'Menjadi pionir dalam menyediakan solusi teknologi yang inovatif dan memberikan kontribusi positif dalam mengubah lanskap bisnis melalui teknologi informasi.',
             'company_vision' => '1. Memberikan solusi teknologi yang terkini dan inovatif untuk mendukung kebutuhan bisnis pelanggan.
