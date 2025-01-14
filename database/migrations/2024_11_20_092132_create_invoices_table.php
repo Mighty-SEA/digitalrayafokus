@@ -17,7 +17,6 @@ return new class extends Migration
             $table->date('invoice_date');
             $table->date('due_date')->nullable();
             $table->string('email_reciver');
-            $table->boolean('is_dollar')->default('0');
             $table->integer('current_dollar')->nullable();
             $table->string('status')->default('pending');
             $table->timestamps();

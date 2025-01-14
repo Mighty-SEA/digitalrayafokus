@@ -25,6 +25,7 @@ use App\Filament\Resources\InvoiceResource\Actions\GeneratePdfAction;
 use App\Filament\Resources\InvoiceResource\Actions\SendInvoiceAction;
 use App\Filament\Resources\InvoiceResource\Actions\BulkActions;
 use Filament\Forms\Components\Group;
+use Illuminate\Contracts\View\View;
 
 
 class InvoiceResource extends Resource
@@ -103,16 +104,6 @@ class InvoiceResource extends Resource
                                 ->default('pending')
                                 ->required()
                                 ->columnSpan(1),
-
-                            Select::make('is_dollar')
-                                ->label('Currency')
-                                ->options([
-                                    0 => 'IDR (Rupiah)',
-                                    1 => 'USD (Dollar)'
-                                ])
-                                ->default(0)
-                                ->live()
-                                ->columnSpan(1),
                         ])
                         ->columns(4),
 
@@ -169,6 +160,14 @@ class InvoiceResource extends Resource
                                 ->live()
                                 ->columnSpan(2),
                             TextInput::make("description")->columnSpan(2),
+                            Select::make('is_dollar')
+                                ->label('Currency')
+                                ->options([
+                                    0 => 'IDR (Rupiah)',
+                                    1 => 'USD (Dollar)'
+                                ])
+                                ->default(0)
+                                ->columnSpan(1),
                             TextInput::make("quantity")
                                 ->default(1)
                                 ->live(onBlur: true)
@@ -176,90 +175,70 @@ class InvoiceResource extends Resource
                                 ->minValue(1)
                                 ->required()
                                 ->suffix("unit")
-                                ->afterStateUpdated(function (
-                                    callable $set,
-                                    $state,
-                                    $get
-                                ) {
-                                    $priceRupiah = $get("price_rupiah") ?? 0;
-                                    $amount = $priceRupiah * $state;
-                                    $set("amount_rupiah", $amount);
-                                }),
+                                ->afterStateUpdated(function ($state, callable $set, Get $get) {
+                                    // Hitung ulang amount ketika quantity berubah
+                                    $price_rupiah = $get('price_rupiah') ?? 0;
+                                    $price_dollar = $get('price_dollar') ?? 0;
+                                    
+                                    $set('amount_rupiah', $price_rupiah * $state);
+                                    $set('amount_dollar', $price_dollar * $state);
+                                })
+                                ->columnSpan(1),
                             TextInput::make("price_rupiah")
                                 ->label("Harga (IDR)")
+                                ->hidden(fn (Get $get) => $get('is_dollar'))
+                                ->columnSpan(2)
                                 ->live(onBlur: true)
-                                ->required()
                                 ->numeric()
                                 ->prefix("Rp")
-                                ->afterStateUpdated(function (
-                                    callable $set,
-                                    $state,
-                                    $get
-                                ) {
-                                    $currentDollar = Settings::get('current_dollar');
-                                    if ($currentDollar != 0) {
-                                        $set(
-                                            "price_dollar",
-                                            $state / $currentDollar
-                                        );
-                                    } else {
-                                        $set("price_dollar", 0);
+                                ->afterStateUpdated(function ($state, callable $set, Get $get) {
+                                    $current_dollar = $get('../../current_dollar');
+                                    if ($state && $current_dollar) {
+                                        $price_dollar = round($state / $current_dollar, 2);
+                                        $set('price_dollar', $price_dollar);
+                                        
+                                        // Update amounts
+                                        $quantity = $get('quantity') ?? 1;
+                                        $set('amount_rupiah', $state * $quantity);
+                                        $set('amount_dollar', $price_dollar * $quantity);
                                     }
-                                    $quantity = $get("quantity") ?? 1;
-                                    $amountRupiah = $state * $quantity;
-                                    $set("amount_rupiah", $amountRupiah);
-                                    $set(
-                                        "amount_dollar",
-                                        $currentDollar ? $amountRupiah / $currentDollar : 0
-                                    );
-                                })
-                                ->hidden(fn (Get $get): bool => $get('../../is_dollar')),
+                                }),
                             TextInput::make("price_dollar")
                                 ->label("Harga (USD)")
+                                ->hidden(fn (Get $get) => !$get('is_dollar'))
                                 ->live(onBlur: true)
+                                ->columnSpan(2)
                                 ->numeric()
                                 ->prefix('$')
-                                ->hidden(fn (Get $get): bool => !$get('../../is_dollar'))
-                                ->afterStateUpdated(function (
-                                    callable $set,
-                                    $state,
-                                    $get
-                                ) {
-                                    $currentDollar = Settings::get('current_dollar');
-                                    if ($currentDollar != 0) {
-                                        $set(
-                                            "price_rupiah",
-                                            $state * $currentDollar
-                                        );
-                                    } else {
-                                        $set("price_rupiah", 0);
+                                ->afterStateUpdated(function ($state, callable $set, Get $get) {
+                                    $current_dollar = $get('../../current_dollar');
+                                    if ($state && $current_dollar) {
+                                        $price_rupiah = round($state * $current_dollar);
+                                        $set('price_rupiah', $price_rupiah);
+                                        
+                                        // Update amounts
+                                        $quantity = $get('quantity') ?? 1;
+                                        $set('amount_rupiah', $price_rupiah * $quantity);
+                                        $set('amount_dollar', $state * $quantity);
                                     }
-                                    $quantity = $get("quantity") ?? 1;
-                                    $amountDollar = $state * $quantity;
-                                    $set("amount_dollar", $amountDollar);
-                                    $set(
-                                        "amount_rupiah",
-                                        $currentDollar ? $amountDollar * $currentDollar : 0
-                                    );
                                 }),
                             TextInput::make("amount_rupiah")
                                 ->label("Total (IDR)")
-                                ->prefix("Rp")
-                                ->default(0)
-                                ->hidden(fn (Get $get): bool => $get('../../is_dollar')),
+                                ->disabled()
+                                ->dehydrated()
+                                ->prefix("Rp"),
                             TextInput::make("amount_dollar")
                                 ->label("Total (USD)")
-                                ->prefix('$')
-                                ->hidden(fn (Get $get): bool => !$get('../../is_dollar')),
+                                ->disabled()
+                                ->dehydrated()
+                                ->prefix("$"),
                         ])
                         ->defaultItems(1)
                         ->columnSpanFull()
                         ->columns(8)
                         ->collapsible()
                         ->cloneable()
-                        ->itemLabel(
-                            fn(array $state): ?string => $state["name"] ?? null
-                        ),
+                        ->itemLabel(fn(array $state): ?string => $state["name"] ?? null),
                 ]),
         ]);
         }
@@ -369,6 +348,20 @@ class InvoiceResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->modalContent(fn ($record): View => view('filament.resources.invoice.modal.view', [
+                        'invoice' => $record,
+                    ]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelAction(false)
+                    ->modalWidth('5xl')
+                    ->icon("heroicon-o-eye")
+                    ->color('info')
+                    ->tooltip('View')
+                    ->label('')
+                    ->size('md')
+                    ->form([]),
+                
                 Tables\Actions\EditAction::make()
                     ->icon("heroicon-o-pencil")
                     ->color('info')

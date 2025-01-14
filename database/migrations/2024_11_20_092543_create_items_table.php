@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('invoice_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->string('description');
+            $table->boolean('is_dollar')->default(false);
             $table->integer('quantity');
             $table->integer('price_rupiah');
             $table->integer('price_dollar')->nullable();

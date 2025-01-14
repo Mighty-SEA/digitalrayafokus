@@ -31,9 +31,9 @@ class DatabaseSeeder extends Seeder
                 ]);
 
         // Run the Customer and Invoices seeders
-        $this->call([
-            CustomerSeeder::class,
-            InvoicesSeeder::class,
-        ]);
+        // $this->call([
+        //     CustomerSeeder::class,
+        //     InvoicesSeeder::class,
+        // ]);
     }
 }

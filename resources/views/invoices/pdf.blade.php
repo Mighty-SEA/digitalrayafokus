@@ -126,28 +126,30 @@
         }
         .total-section {
             width: 300px;
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 8px;
-            margin-left: auto;
+            margin: 20px 0 20px auto;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 6px;
         }
         .total-section table {
-            font-size: 9px;
-            margin: 0;
             width: 100%;
+            border-collapse: collapse;
         }
         .total-section td {
-            border: none;
-            padding: 3px 6px;
-            text-align: right;
+            padding: 4px 0;
         }
-        .total-section td:first-child {
-            text-align: left;
+        .subtotal-row td {
+            padding: 6px;
+            color: #475569;
         }
-        .total-row {
+        .total-row td {
             font-weight: bold;
-            color: var(--primary-color);
-            background: white !important;
+            color: #0f2147;
+        }
+        .exchange-row td {
+            padding-top: 4px;
+            font-size: 9px;
+            color: #64748b;
         }
         .footer {
             clear: both;
@@ -357,6 +359,22 @@
             background-color: #fff3cd;
             color: #856404;
         }
+        .payment-info {
+            margin: 15px 0;
+            padding: 8px;
+            background: #f8fafc;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 10px;
+        }
+        .payment-table {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .payment-table td {
+            padding: 4px 0;
+        }
     </style>
 </head>
 <body>
@@ -397,16 +415,11 @@
         <table class="items-table">
             <thead>
                 <tr>
-                    <th style="width: 35%;">ITEM</th>
+                    <th style="width: 30%;">ITEM</th>
                     <th style="width: 25%;">DESCRIPTION</th>
                     <th style="text-align: center; width: 10%;">QTY</th>
-                    @if($invoice->is_dollar)
-                        <th style="text-align: right; width: 15%;">PRICE (USD)</th>
-                        <th style="text-align: right; width: 15%;">TOTAL (USD)</th>
-                    @else
-                        <th style="text-align: right; width: 15%;">PRICE (IDR)</th>
-                        <th style="text-align: right; width: 15%;">TOTAL (IDR)</th>
-                    @endif
+                    <th style="text-align: right; width: 17%;">PRICE</th>
+                    <th style="text-align: right; width: 18%;">TOTAL</th>
                 </tr>
             </thead>
             <tbody>
@@ -415,7 +428,7 @@
                         <td style="font-weight: 600;">{{ $item->name }}</td>
                         <td>{{ $item->description }}</td>
                         <td style="text-align: center;">{{ $item->quantity }}</td>
-                        @if($invoice->is_dollar)
+                        @if($item->is_dollar)
                             <td style="text-align: right;">${{ number_format($item->price_dollar, 2) }}</td>
                             <td style="text-align: right;">${{ number_format($item->amount_dollar, 2) }}</td>
                         @else
@@ -430,29 +443,37 @@
         <div class="total-section">
             <table>
                 <tr>
-                    <td><strong>Subtotal:</strong></td>
+                    <td>Subtotal IDR:</td>
                     <td style="text-align: right;">
-                        @if($invoice->is_dollar)
-                            ${{ number_format($invoice->item->sum('amount_dollar'), 2) }}
-                        @else
-                            Rp {{ number_format($invoice->item->sum('amount_rupiah'), 0, ',', '.') }}
-                        @endif
+                        Rp {{ number_format($invoice->item->where('is_dollar', false)->sum('amount_rupiah'), 0, ',', '.') }}
                     </td>
                 </tr>
-                @if($invoice->is_dollar)
-                    <tr>
-                        <td><strong>IDR Equivalent:</strong></td>
-                        <td style="text-align: right;">Rp {{ number_format($invoice->item->sum('amount_dollar') * $invoice->current_dollar, 0, ',', '.') }}</td>
-                    </tr>
-                    <tr class="total-row">
-                        <td><strong>Exchange Rate:</strong></td>
-                        <td style="text-align: right;">1 USD = Rp {{ number_format($invoice->current_dollar, 0, ',', '.') }}</td>
-                    </tr>
-                @endif
+                <tr>
+                    <td>Subtotal USD:</td>
+                    <td style="text-align: right;">
+                        ${{ number_format($invoice->item->where('is_dollar', true)->sum('amount_dollar'), 2) }}
+                    </td>
+                </tr>
+                <tr style="border-top: 1px solid #e2e8f0; font-weight: bold;">
+                    <td style="padding-top: 8px;">Total Amount:</td>
+                    <td style="text-align: right; padding-top: 8px;">
+                        Rp {{ number_format(
+                            $invoice->item->where('is_dollar', false)->sum('amount_rupiah') + 
+                            ($invoice->item->where('is_dollar', true)->sum('amount_dollar') * $invoice->current_dollar), 
+                            0, ',', '.'
+                        ) }}
+                    </td>
+                </tr>
+                <tr style="font-size: 9px; color: #666;">
+                    <td>Exchange Rate:</td>
+                    <td style="text-align: right;">1 USD = Rp {{ number_format($invoice->current_dollar, 0, ',', '.') }}</td>
+                </tr>
             </table>
-            @if($invoice->is_dollar)
-                <div class="currency-note">* Exchange rate at invoice creation</div>
-            @endif
+            <div style="font-size: 9px; color: #666; margin-top: 4px;">* Exchange rate at invoice creation</div>
+        </div>
+
+        <div class="payment-info">
+            <strong>INFORMASI PEMBAYARAN:</strong>&nbsp;&nbsp;BRI&nbsp;&nbsp;|&nbsp;&nbsp;398329283298&nbsp;&nbsp;|&nbsp;&nbsp;a.n Wahyu
         </div>
 
         <div class="footer">
