@@ -97,18 +97,14 @@ class InvoiceResource extends Resource
                             Select::make('status')
                                 ->options([
                                     'pending' => 'Pending',
-                                    'paid' => 'Paid',
+                                    'paid' => 'Paid', 
                                     'cancelled' => 'Cancelled'
                                 ])
                                 ->native(false)
                                 ->default('pending')
                                 ->required()
                                 ->columnSpan(1),
-                        ])
-                        ->columns(4),
 
-                    Group::make()
-                        ->schema([
                             TextInput::make("current_dollar")
                                 ->label("Kurs USD")
                                 ->prefix('$')
@@ -119,6 +115,7 @@ class InvoiceResource extends Resource
                                 })
                                 ->live(onBlur: true)
                                 ->required()
+                                ->columnSpan(1)
                                 ->afterStateUpdated(function (callable $set, $state) {
                                     Settings::set('current_dollar', $state);
                                 })
@@ -142,11 +139,9 @@ class InvoiceResource extends Resource
                                             }
                                         })
                                 )
-                                ->columnSpan(2),
                         ])
-                        ->columns(2),
-                ])
-                ->columns(1),
+                        ->columns(4),
+                ]),
 
                 Section::make("Items")
                 ->description("Add invoice items")
@@ -163,8 +158,8 @@ class InvoiceResource extends Resource
                             Select::make('is_dollar')
                                 ->label('Currency')
                                 ->options([
-                                    0 => 'IDR (Rupiah)',
-                                    1 => 'USD (Dollar)'
+                                    0 => 'IDR',
+                                    1 => 'USD'
                                 ])
                                 ->default(0)
                                 ->columnSpan(1),
@@ -175,53 +170,29 @@ class InvoiceResource extends Resource
                                 ->minValue(1)
                                 ->required()
                                 ->suffix("unit")
-                                ->afterStateUpdated(function ($state, callable $set, Get $get) {
-                                    // Hitung ulang amount ketika quantity berubah
-                                    $price_rupiah = $get('price_rupiah') ?? 0;
-                                    $price_dollar = $get('price_dollar') ?? 0;
-                                    
-                                    $set('amount_rupiah', $price_rupiah * $state);
-                                    $set('amount_dollar', $price_dollar * $state);
-                                })
-                                ->columnSpan(1),
+                                ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
+                                    static::calculateAmounts($state, $set, $get)
+                                ),
                             TextInput::make("price_rupiah")
                                 ->label("Harga (IDR)")
-                                ->hidden(fn (Get $get) => $get('is_dollar'))
                                 ->columnSpan(2)
+                                ->hidden(fn (Get $get) => $get('is_dollar'))
                                 ->live(onBlur: true)
                                 ->numeric()
                                 ->prefix("Rp")
-                                ->afterStateUpdated(function ($state, callable $set, Get $get) {
-                                    $current_dollar = $get('../../current_dollar');
-                                    if ($state && $current_dollar) {
-                                        $price_dollar = round($state / $current_dollar, 2);
-                                        $set('price_dollar', $price_dollar);
-                                        
-                                        // Update amounts
-                                        $quantity = $get('quantity') ?? 1;
-                                        $set('amount_rupiah', $state * $quantity);
-                                        $set('amount_dollar', $price_dollar * $quantity);
-                                    }
-                                }),
+                                ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
+                                    static::calculatePrices($state, $set, $get, 'rupiah')
+                                ),
                             TextInput::make("price_dollar")
                                 ->label("Harga (USD)")
                                 ->hidden(fn (Get $get) => !$get('is_dollar'))
                                 ->live(onBlur: true)
-                                ->columnSpan(2)
                                 ->numeric()
+                                ->columnSpan(2)
                                 ->prefix('$')
-                                ->afterStateUpdated(function ($state, callable $set, Get $get) {
-                                    $current_dollar = $get('../../current_dollar');
-                                    if ($state && $current_dollar) {
-                                        $price_rupiah = round($state * $current_dollar);
-                                        $set('price_rupiah', $price_rupiah);
-                                        
-                                        // Update amounts
-                                        $quantity = $get('quantity') ?? 1;
-                                        $set('amount_rupiah', $price_rupiah * $quantity);
-                                        $set('amount_dollar', $state * $quantity);
-                                    }
-                                }),
+                                ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
+                                    static::calculatePrices($state, $set, $get, 'dollar')
+                                ),
                             TextInput::make("amount_rupiah")
                                 ->label("Total (IDR)")
                                 ->disabled()
@@ -271,19 +242,12 @@ class InvoiceResource extends Resource
 
                 TextColumn::make("item.amount_rupiah")
                     ->label("Amount (IDR/USD)")
-                    ->description(function (Invoice $record): string {
-                        if (!$record->is_dollar) {
-                            return "";
-                        }
-                        $total_dollar = $record->item()->sum("amount_dollar");
-                        return $total_dollar > 0
-                            ? "$ " . number_format($total_dollar, 2)
-                            : "";
-                    })
-                    ->formatStateUsing(function ($state, Invoice $record) {
-                        $total_rupiah = $record->item()->sum("amount_rupiah");
-                        return "Rp. " . number_format($total_rupiah, 0, ",", ".");
-                    })
+                    ->description(fn (Invoice $record): string => 
+                        static::getAmountDescription($record)
+                    )
+                    ->formatStateUsing(fn ($state, Invoice $record) =>
+                        static::formatAmount($record)
+                    )
                     ->size('l')
                     ->color('success')
                     ->sortable(
@@ -407,5 +371,51 @@ class InvoiceResource extends Resource
             "create" => Pages\CreateInvoice::route("/create"),
             "edit" => Pages\EditInvoice::route("/{record}/edit"),
         ];
+    }
+
+    protected static function calculateAmounts($quantity, callable $set, Get $get): void
+    {
+        $price_rupiah = $get('price_rupiah') ?? 0;
+        $price_dollar = $get('price_dollar') ?? 0;
+        
+        $set('amount_rupiah', $price_rupiah * $quantity);
+        $set('amount_dollar', $price_dollar * $quantity);
+    }
+
+    protected static function calculatePrices($price, callable $set, Get $get, string $type): void
+    {
+        $current_dollar = $get('../../current_dollar');
+        $quantity = $get('quantity') ?? 1;
+
+        if ($price && $current_dollar) {
+            if ($type === 'rupiah') {
+                $price_dollar = round($price / $current_dollar, 2);
+                $set('price_dollar', $price_dollar);
+                $set('amount_rupiah', $price * $quantity);
+                $set('amount_dollar', $price_dollar * $quantity);
+            } else {
+                $price_rupiah = round($price * $current_dollar);
+                $set('price_rupiah', $price_rupiah);
+                $set('amount_rupiah', $price_rupiah * $quantity);
+                $set('amount_dollar', $price * $quantity);
+            }
+        }
+    }
+
+    protected static function getAmountDescription(Invoice $record): string 
+    {
+        if (!$record->is_dollar) {
+            return "";
+        }
+        $total_dollar = $record->item()->sum("amount_dollar");
+        return $total_dollar > 0 
+            ? "$ " . number_format($total_dollar, 2)
+            : "";
+    }
+
+    protected static function formatAmount(Invoice $record): string
+    {
+        $total_rupiah = $record->item()->sum("amount_rupiah");
+        return "Rp. " . number_format($total_rupiah, 0, ",", ".");
     }
 }
