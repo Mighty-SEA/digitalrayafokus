@@ -39,109 +39,7 @@ class InvoiceResource extends Resource
             Section::make("Invoice Details")
                 ->description("Enter invoice information")
                 ->icon("heroicon-o-document-text")
-                ->schema([
-                    Group::make()
-                        ->schema([
-                            Select::make("customer_id")
-                                ->relationship("customer", "nama")
-                                ->createOptionForm([
-                                    TextInput::make("nama")->required(),
-                                    TextInput::make("email")->email()->required(),
-                                    TextInput::make("phone")->tel()->required()
-                                ])
-                                ->searchable()
-                                ->preload()
-                                ->required()
-                                ->live()
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    $customer = \App\Models\Customer::find($state);
-                                    if ($customer) {
-                                        $set("email_reciver", $customer->email);
-                                    }
-                                })
-                                ->columnSpan(1),
-
-                            TextInput::make("email_reciver")
-                                ->live(onBlur: true)
-                                ->placeholder(function ($get) {
-                                    $customer = \App\Models\Customer::find($get("customer_id"));
-                                    return $customer ? $customer->email : "";
-                                })
-                                ->label("Email Penerima")
-                                ->email()
-                                ->required()
-                                ->columnSpan(1),
-                        ])
-                        ->columns(2),
-
-                    Group::make()
-                        ->schema([
-                            DatePicker::make("invoice_date")
-                                ->default(now())
-                                ->required()
-                                ->displayFormat("d/m/Y")
-                                ->live()
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    $dueDate = \Carbon\Carbon::parse($state)->addDays(7);
-                                    $set("due_date", $dueDate);
-                                })
-                                ->columnSpan(1),
-
-                            DatePicker::make("due_date")
-                                ->required()
-                                ->displayFormat("d/m/Y")
-                                ->minDate(now())
-                                ->default(now()->addDays(7))
-                                ->columnSpan(1),
-
-                            Select::make('status')
-                                ->options([
-                                    'pending' => 'Pending',
-                                    'paid' => 'Paid', 
-                                    'cancelled' => 'Cancelled'
-                                ])
-                                ->native(false)
-                                ->default('pending')
-                                ->required()
-                                ->columnSpan(1),
-
-                            TextInput::make("current_dollar")
-                                ->label("Kurs USD")
-                                ->prefix('$')
-                                ->numeric()
-                                ->default(Settings::get('current_dollar'))
-                                ->afterStateHydrated(function (callable $set) {
-                                    $set("current_dollar", Settings::get('current_dollar'));
-                                })
-                                ->live(onBlur: true)
-                                ->required()
-                                ->columnSpan(1)
-                                ->afterStateUpdated(function (callable $set, $state) {
-                                    Settings::set('current_dollar', $state);
-                                })
-                                ->suffixAction(
-                                    FormAction::make("fetch_kurs")
-                                        ->icon("heroicon-m-arrow-path")
-                                        ->action(function (callable $set) {
-                                            $response = Http::get(
-                                                "https://v6.exchangerate-api.com/v6/08350a93548cd0baa01331b9/latest/USD"
-                                            );
-
-                                            if ($response->successful()) {
-                                                $data = $response->json();
-                                                $rate = $data["conversion_rates"]["IDR"];
-                                                Settings::set('current_dollar', $rate);
-                                                $set("current_dollar", $rate);
-                                                Notification::make()
-                                                    ->title("Kurs Updated")
-                                                    ->success()
-                                                    ->send();
-                                            }
-                                        })
-                                )
-                        ])
-                        ->columns(4),
-                ]),
+                ->schema(static::getInvoiceDetailsSchema()),
 
                 Section::make("Items")
                 ->description("Add invoice items")
@@ -375,31 +273,40 @@ class InvoiceResource extends Resource
 
     protected static function calculateAmounts($quantity, callable $set, Get $get): void
     {
-        $price_rupiah = $get('price_rupiah') ?? 0;
-        $price_dollar = $get('price_dollar') ?? 0;
+        $price_rupiah = (float)($get('price_rupiah') ?? 0);
+        $price_dollar = (float)($get('price_dollar') ?? 0);
         
-        $set('amount_rupiah', $price_rupiah * $quantity);
-        $set('amount_dollar', $price_dollar * $quantity);
+        $amount_rupiah = $price_rupiah * $quantity;
+        $amount_dollar = $price_dollar * $quantity;
+        
+        $set('amount_rupiah', $amount_rupiah);
+        $set('amount_dollar', $amount_dollar);
     }
 
     protected static function calculatePrices($price, callable $set, Get $get, string $type): void
     {
-        $current_dollar = $get('../../current_dollar');
-        $quantity = $get('quantity') ?? 1;
+        $current_dollar = (float)$get('../../current_dollar');
+        $quantity = max(1, (int)$get('quantity'));
 
-        if ($price && $current_dollar) {
-            if ($type === 'rupiah') {
-                $price_dollar = round($price / $current_dollar, 2);
-                $set('price_dollar', $price_dollar);
-                $set('amount_rupiah', $price * $quantity);
-                $set('amount_dollar', $price_dollar * $quantity);
-            } else {
-                $price_rupiah = round($price * $current_dollar);
-                $set('price_rupiah', $price_rupiah);
-                $set('amount_rupiah', $price_rupiah * $quantity);
-                $set('amount_dollar', $price * $quantity);
-            }
+        if ($price <= 0 || $current_dollar <= 0) {
+            return;
         }
+
+        if ($type === 'rupiah') {
+            $price_dollar = round($price / $current_dollar, 2);
+            static::setPrices($set, $price, $price_dollar, $quantity);
+        } else {
+            $price_rupiah = round($price * $current_dollar);
+            static::setPrices($set, $price_rupiah, $price, $quantity);
+        }
+    }
+
+    private static function setPrices(callable $set, float $price_rupiah, float $price_dollar, int $quantity): void
+    {
+        $set('price_rupiah', $price_rupiah);
+        $set('price_dollar', $price_dollar);
+        $set('amount_rupiah', $price_rupiah * $quantity);
+        $set('amount_dollar', $price_dollar * $quantity);
     }
 
     protected static function getAmountDescription(Invoice $record): string 
@@ -417,5 +324,105 @@ class InvoiceResource extends Resource
     {
         $total_rupiah = $record->item()->sum("amount_rupiah");
         return "Rp. " . number_format($total_rupiah, 0, ",", ".");
+    }
+
+    protected static function getInvoiceDetailsSchema(): array
+    {
+        return [
+            Group::make()
+                ->schema([
+                    Select::make("customer_id")
+                        ->relationship("customer", "nama")
+                        ->createOptionForm([
+                            TextInput::make("nama")->required(),
+                            TextInput::make("email")->email()->required(),
+                            TextInput::make("phone")->tel()->required()
+                        ])
+                        ->searchable()
+                        ->preload()
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            if ($customer = \App\Models\Customer::find($state)) {
+                                $set("email_reciver", $customer->email);
+                            }
+                        }),
+                    TextInput::make("email_reciver")
+                        ->live(onBlur: true)
+                        ->placeholder(function ($get) {
+                            $customer = \App\Models\Customer::find($get("customer_id"));
+                            return $customer ? $customer->email : "";
+                        })
+                        ->label("Email Penerima")
+                        ->email()
+                        ->required()
+                        ->columnSpan(1),
+                ])
+                ->columns(2),
+            Group::make()
+                ->schema([
+                    DatePicker::make("invoice_date")
+                        ->default(now())
+                        ->required()
+                        ->displayFormat("d/m/Y")
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $dueDate = \Carbon\Carbon::parse($state)->addDays(7);
+                            $set("due_date", $dueDate);
+                        })
+                        ->columnSpan(1),
+                    DatePicker::make("due_date")
+                        ->required()
+                        ->displayFormat("d/m/Y")
+                        ->minDate(now())
+                        ->default(now()->addDays(7))
+                        ->columnSpan(1),
+                    Select::make('status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'paid' => 'Paid', 
+                            'cancelled' => 'Cancelled'
+                        ])
+                        ->native(false)
+                        ->default('pending')
+                        ->required()
+                        ->columnSpan(1),
+                    TextInput::make("current_dollar")
+                        ->label("Kurs USD")
+                        ->prefix('$')
+                        ->numeric()
+                        ->default(Settings::get('current_dollar'))
+                        ->afterStateHydrated(function (callable $set) {
+                            $set("current_dollar", Settings::get('current_dollar'));
+                        })
+                        ->live(onBlur: true)
+                        ->required()
+                        ->columnSpan(1)
+                        ->afterStateUpdated(function (callable $set, $state) {
+                            Settings::set('current_dollar', $state);
+                        })
+                        ->suffixAction(
+                            FormAction::make("fetch_kurs")
+                                ->icon("heroicon-m-arrow-path")
+                                ->action(function (callable $set) {
+                                    $response = Http::get(
+                                        "https://v6.exchangerate-api.com/v6/08350a93548cd0baa01331b9/latest/USD"
+                                    );
+
+                                    if ($response->successful()) {
+                                        $data = $response->json();
+                                        $rate = $data["conversion_rates"]["IDR"];
+                                        Settings::set('current_dollar', $rate);
+                                        $set("current_dollar", $rate);
+                                        Notification::make()
+                                            ->title("Kurs Updated")
+                                            ->success()
+                                            ->send();
+                                    }
+                                })
+                        )
+                ])
+                ->columns(4),
+        ];
     }
 }
