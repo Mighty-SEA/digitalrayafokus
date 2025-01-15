@@ -10,8 +10,8 @@
         <span class="text-base font-bold bg-gradient-to-r from-amber-500 to-amber-700 bg-clip-text text-transparent whitespace-nowrap">
             {{ \App\Models\Settings::get('company_name') ?? config('app.name') }}
         </span>
-        <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+        {{-- <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
             {{ \App\Models\Settings::get('company_2ln') ?? 'IT Technology' }}
-        </span>
+        </span> --}}
     </div>
 </div> 

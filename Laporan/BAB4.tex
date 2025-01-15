@@ -3,6 +3,38 @@
 \usepackage{times} 
 \usepackage[left=3cm,right=2.5cm,top=3cm,bottom=2.5cm]{geometry}
 
+% Tambahkan package untuk syntax highlighting
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Definisikan warna untuk syntax highlighting
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% Konfigurasi style untuk listings
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
 \begin{document}
 
 \chapter{Pelaksanaan Kerja Praktek}
@@ -239,5 +271,1265 @@ Sistem basis data faktur dirancang dengan mempertimbangkan:
     \item Audit trail
     \end{itemize}
 \end{enumerate}
+
+\section{Implementasi Sistem}
+\subsection{Implementasi Invoice}
+Implementasi sistem invoice terdiri dari beberapa komponen utama:
+
+\begin{enumerate}
+\item \textbf{Resource Invoice:}
+    \begin{itemize}
+    \item Menggunakan framework Filament untuk membangun antarmuka CRUD
+    \item Memiliki form schema yang terdiri dari dua bagian utama:
+        \begin{itemize}
+        \item Invoice Details: Berisi informasi dasar faktur seperti pelanggan, tanggal, dan status
+        \item Items: Berisi daftar item yang dapat ditambahkan secara dinamis
+        \end{itemize}
+    \item Implementasi tabel dengan kolom-kolom:
+        \begin{itemize}
+        \item Nama pelanggan
+        \item Tanggal faktur
+        \item Jumlah item
+        \item Total dalam IDR dan USD
+        \item Status pembayaran
+        \item Tanggal jatuh tempo
+        \item Kurs dollar (jika menggunakan USD)
+        \end{itemize}
+    \end{itemize}
+
+\item \textbf{Kalkulasi Harga:}
+    \begin{itemize}
+    \item Menggunakan service terpisah (InvoiceCalculationService) untuk menangani perhitungan
+    \item Fitur konversi otomatis antara IDR dan USD
+    \item Perhitungan total otomatis berdasarkan quantity dan harga
+    \item Integrasi dengan API kurs untuk mendapatkan nilai tukar terkini
+    \end{itemize}
+
+\item \textbf{Sistem Pengiriman Email:}
+    \begin{itemize}
+    \item Implementasi melalui InvoiceMail class
+    \item Fitur attachment PDF faktur secara otomatis
+    \item Penggunaan template email yang dapat dikustomisasi
+    \item Integrasi dengan pengaturan perusahaan untuk header email
+    \end{itemize}
+
+\item \textbf{Fitur Tambahan:}
+    \begin{itemize}
+    \item Generate PDF faktur
+    \item Pengiriman faktur melalui email
+    \item Manajemen status pembayaran
+    \item Pencatatan riwayat perubahan
+    \item Validasi input real-time
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Penjelasan Komponen InvoiceResource}
+Berikut adalah penjelasan detail dari setiap komponen dalam file InvoiceResource.php:
+
+\subsubsection{Deklarasi Kelas dan Properti}
+Kelas InvoiceResource mewarisi kelas Resource dari Filament dengan properti utama:
+\begin{itemize}
+    \item \texttt{\$model}: Menentukan model yang terkait (Invoice)
+    \item \texttt{\$navigationIcon}: Menentukan ikon yang ditampilkan di navigasi
+\end{itemize}
+
+\subsubsection{Fungsi Table}
+Fungsi ini mendefinisikan struktur tabel untuk menampilkan data invoice dengan beberapa komponen penting:
+
+\begin{enumerate}
+\item \textbf{TextColumn:}
+    \begin{itemize}
+    \item \texttt{make()}: Membuat kolom dengan nama field
+    \item \texttt{label()}: Label yang ditampilkan di header kolom
+    \item \texttt{searchable()}: Mengaktifkan fitur pencarian
+    \item \texttt{sortable()}: Mengaktifkan fitur pengurutan
+    \item \texttt{weight()}: Mengatur ketebalan teks
+    \item \texttt{size()}: Mengatur ukuran teks
+    \item \texttt{translateLabel()}: Menerjemahkan label ke bahasa yang aktif
+    \end{itemize}
+
+\item \textbf{Formatting Kolom:}
+    \begin{itemize}
+    \item \texttt{formatStateUsing()}: Memformat nilai yang ditampilkan menggunakan fungsi kustom
+    \item Dapat menggunakan closure function untuk format yang kompleks
+    \end{itemize}
+
+\item \textbf{Badge dan Kondisional:}
+    \begin{itemize}
+    \item \texttt{badge()}: Menampilkan nilai sebagai badge
+    \item \texttt{color()}: Mengatur warna badge berdasarkan kondisi
+    \item Mendukung pengaturan warna dinamis berdasarkan status
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Actions (Aksi Tabel)}
+Sistem menyediakan beberapa aksi untuk setiap baris data:
+\begin{itemize}
+\item \texttt{ViewAction}: Aksi untuk melihat detail dalam modal
+\item \texttt{EditAction}: Aksi untuk mengedit data
+\item \texttt{modalContent()}: Mengatur konten modal
+\item \texttt{icon()}: Mengatur ikon untuk aksi
+\end{itemize}
+
+\subsubsection{Form Schema}
+Form schema mendefinisikan struktur formulir untuk operasi create dan edit:
+\begin{itemize}
+\item \texttt{Section}: Membagi form menjadi beberapa bagian
+\item \texttt{schema()}: Mendefinisikan field-field dalam form
+\item Mendukung validasi dan pengaturan tampilan yang fleksibel
+\end{itemize}
+
+\subsubsection{Repeater untuk Items}
+Komponen untuk mengelola multiple item dalam invoice:
+\begin{itemize}
+\item \texttt{Repeater}: Komponen untuk menambah multiple item
+\item \texttt{relationship()}: Menghubungkan dengan relasi di model
+\item \texttt{live()}: Update realtime saat nilai berubah
+\item Mendukung validasi per item
+\end{itemize}
+
+\subsubsection{Kalkulasi dan Helper Functions}
+Sistem menyediakan fungsi pembantu untuk kalkulasi:
+\begin{itemize}
+\item Fungsi untuk menghitung total harga
+\item \texttt{\$set}: Callback untuk mengatur nilai field
+\item \texttt{\$get}: Callback untuk mendapatkan nilai field
+\item Mendukung konversi mata uang otomatis
+\end{itemize}
+
+\subsubsection{Bulk Actions}
+Aksi yang dapat dilakukan pada multiple baris:
+\begin{itemize}
+\item \texttt{DeleteBulkAction}: Aksi untuk menghapus multiple data
+\item Mendukung custom bulk actions
+\item Integrasi dengan sistem konfirmasi
+\end{itemize}
+
+\subsubsection{Filters dan Pengaturan Tabel}
+Konfigurasi tampilan dan behavior tabel:
+\begin{itemize}
+\item \texttt{striped()}: Membuat tampilan tabel bergaris-garis
+\item \texttt{defaultSort()}: Pengurutan default
+\item \texttt{poll()}: Auto-refresh tabel setiap interval waktu
+\item Mendukung pengaturan tampilan responsif
+\end{itemize}
+
+\subsubsection{Select dan Form Components}
+Komponen form untuk input data:
+\begin{itemize}
+\item \texttt{Select}: Komponen dropdown untuk memilih data
+\item \texttt{relationship()}: Menghubungkan dengan model lain
+\item \texttt{createOptionForm()}: Form untuk membuat opsi baru
+\item Mendukung validasi dan format input yang beragam
+\end{itemize}
+
+\subsection{Komponen Teknis}
+\begin{enumerate}
+\item \textbf{Form Schema:}
+    \begin{itemize}
+    \item Penggunaan komponen Filament seperti TextInput, DatePicker, dan Select
+    \item Implementasi validasi input
+    \item Fitur auto-complete untuk data pelanggan
+    \item Kalkulasi otomatis untuk total dan konversi mata uang
+    \end{itemize}
+
+\item \textbf{Tabel Management:}
+    \begin{itemize}
+    \item Fitur pencarian dan pengurutan
+    \item Filter berdasarkan status dan tanggal
+    \item Aksi bulk untuk multiple invoice
+    \item Tampilan responsif dan mudah digunakan
+    \end{itemize}
+
+\item \textbf{Integrasi API:}
+    \begin{itemize}
+    \item Koneksi dengan API kurs mata uang
+    \item Pembaruan otomatis nilai tukar
+    \item Penyimpanan kurs terakhir di pengaturan sistem
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Implementasi Komponen Sistem}
+
+\subsubsection{Model Relationships dan Database}
+Model Invoice memiliki beberapa relasi dan konfigurasi penting:
+\begin{itemize}
+\item \texttt{\$guarded = []}: Mengizinkan mass assignment untuk semua field
+\item \texttt{\$dates}: Mendefinisikan kolom yang akan dikonversi ke Carbon instances
+\item Relasi:
+    \begin{itemize}
+    \item \texttt{hasMany} dengan Item: Satu invoice bisa memiliki banyak item
+    \item \texttt{belongsTo} dengan Customer: Satu invoice dimiliki oleh satu customer
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Service Layer untuk Kalkulasi}
+Service khusus untuk kalkulasi invoice dengan fungsi-fungsi:
+\begin{itemize}
+\item \texttt{calculateAmounts}: Menghitung total berdasarkan quantity
+\item \texttt{convertCurrency}: Konversi mata uang IDR-USD
+\item Menggunakan \texttt{round()} untuk presisi angka
+\end{itemize}
+
+\subsubsection{Email Notification System}
+Sistem notifikasi email menggunakan kelas \texttt{InvoiceMail}:
+\begin{itemize}
+\item Menggunakan template blade
+\item Menyertakan data perusahaan dari settings
+\item Attachment PDF invoice otomatis
+\item Konfigurasi yang fleksibel untuk konten email
+\end{itemize}
+
+\subsubsection{Statistik Dashboard}
+Widget statistik untuk monitoring invoice:
+\begin{itemize}
+\item Menghitung total pesanan
+\item Persentase pembatalan
+\item Rasio pembayaran
+\item Auto-update setiap interval waktu
+\end{itemize}
+
+\subsubsection{Bulk Actions}
+Aksi massal untuk multiple invoice:
+\begin{itemize}
+\item Generate PDF batch
+\item Kirim email batch
+\item Menggunakan collection untuk efisiensi
+\item Validasi batch operation
+\end{itemize}
+
+\subsubsection{Database Migrations}
+Struktur tabel untuk sistem invoice:
+\begin{itemize}
+\item Foreign key ke invoice
+\item Support dual currency (IDR dan USD)
+\item Soft delete untuk data safety
+\item Indeks untuk optimasi query
+\end{itemize}
+
+\subsubsection{Export Functionality}
+Fitur ekspor data invoice:
+\begin{itemize}
+\item Export ke format Excel
+\item Kustomisasi format kolom
+\item Kalkulasi total otomatis
+\item Support formatting angka
+\end{itemize}
+
+\subsubsection{View Components}
+Komponen blade untuk tampilan:
+\begin{itemize}
+\item Status badge dengan styling dinamis
+\item Reusable di berbagai view
+\item Support tema warna yang konsisten
+\item Komponen modular
+\end{itemize}
+
+\subsubsection{Sistem Notifikasi}
+Multi-channel notification system:
+\begin{itemize}
+\item Notifikasi database dan email
+\item Format pesan yang customizable
+\item Tracking status notifikasi
+\item Data terstruktur untuk database
+\end{itemize}
+
+\subsubsection{Validasi dan Request Rules}
+Sistem validasi komprehensif:
+\begin{itemize}
+\item Validasi form yang menyeluruh
+\item Custom error messages
+\item Validasi nested array untuk items
+\item Conditional validation untuk currency
+\end{itemize}
+
+\subsubsection{Event dan Listeners}
+Sistem event untuk invoice lifecycle:
+\begin{itemize}
+\item Queue system untuk background processing
+\item Activity logging
+\item Cache management
+\item Event handling yang terstruktur
+\end{itemize}
+
+\subsubsection{PDF Generation Service}
+Service khusus untuk generate PDF:
+\begin{itemize}
+\item Integrasi QR code
+\item Custom paper size dan format
+\item File management system
+\item Template yang fleksibel
+\end{itemize}
+
+\subsubsection{Currency Conversion Service}
+Service untuk konversi mata uang:
+\begin{itemize}
+\item API integration untuk kurs
+\item Caching untuk optimasi
+\item Error handling
+\item Presisi perhitungan
+\end{itemize}
+
+\subsubsection{Report Generation}
+Sistem pembuatan laporan:
+\begin{itemize}
+\item Laporan bulanan invoice
+\item Breakdown berdasarkan status
+\item Analisis per customer
+\item Kalkulasi multi-currency
+\end{itemize}
+
+\subsubsection{Command Line Interface}
+CLI untuk manajemen sistem:
+\begin{itemize}
+\item Generate report otomatis
+\item Multiple format output
+\item Parameter yang fleksibel
+\item Feedback yang informatif
+\end{itemize}
+
+\subsection{Implementasi Kode}
+Berikut adalah implementasi detail dari beberapa komponen utama:
+
+\subsubsection{Model Invoice}
+\begin{lstlisting}[language=PHP]
+class Invoice extends Model
+{
+    protected $guarded = [];
+    use HasFactory;
+
+    protected $dates = [
+        'invoice_date',
+        'due_date',
+        'created_at',
+        'updated_at'
+    ];
+
+    public function Item(){
+        return $this->hasMany(Item::class);
+    }
+
+    public function Customer(){
+        return $this->belongsTo(Customer::class);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Service Kalkulasi}
+\begin{lstlisting}[language=PHP]
+class InvoiceCalculationService 
+{
+    public static function calculateAmounts(
+        float $quantity, 
+        float $priceRupiah, 
+        float $priceDollar
+    ): array 
+    {
+        return [
+            'amount_rupiah' => $priceRupiah * $quantity,
+            'amount_dollar' => $priceDollar * $quantity
+        ];
+    }
+
+    public static function convertCurrency(
+        float $price, 
+        float $currentDollar, 
+        string $type
+    ): array 
+    {
+        if ($type === 'rupiah') {
+            $priceDollar = round($price / $currentDollar, 2);
+            return [
+                'price_rupiah' => $price,
+                'price_dollar' => $priceDollar
+            ];
+        }
+
+        $priceRupiah = round($price * $currentDollar);
+        return [
+            'price_rupiah' => $priceRupiah, 
+            'price_dollar' => $price
+        ];
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Notifikasi Email}
+\begin{lstlisting}[language=PHP]
+class InvoiceMail extends Mailable
+{
+    public function content(): Content
+    {
+        return new Content(
+            view: "invoices.send",
+            with: [
+                "invoice" => $this->invoice,
+                "settings" => [
+                    'name' => Settings::get('company_name'),
+                    'email' => Settings::get('company_email'),
+                    'phone' => Settings::get('company_phone'),
+                    'address' => Settings::get('company_address'),
+                    'logo' => Settings::get('company_logo'),
+                ]
+            ]
+        );
+    }
+
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromPath(
+                storage_path(
+                    "app/invoices/" .
+                        $this->invoice->id .
+                        "-" .
+                        $this->invoice->customer->nama .
+                        ".pdf"
+                )
+            ),
+        ];
+    }
+}
+\end{lstlisting}
+
+\subsubsection{PDF Generation Implementation}
+\begin{lstlisting}[language=PHP]
+class PdfGenerationService
+{
+    public function generateInvoicePdf(Invoice $invoice): string
+    {
+        $pdf = PDF::loadView('invoices.pdf', [
+            'invoice' => $invoice,
+            'settings' => $this->getCompanySettings(),
+            'qrCode' => $this->generateQrCode($invoice),
+        ]);
+
+        $pdf->setPaper('a4');
+        
+        $filename = sprintf(
+            'invoice_%s_%s.pdf',
+            $invoice->id,
+            now()->format('Y-m-d')
+        );
+        
+        $path = storage_path("app/invoices/{$filename}");
+        $pdf->save($path);
+        
+        return $path;
+    }
+
+    private function generateQrCode(Invoice $invoice): string
+    {
+        return QrCode::format('svg')
+            ->size(100)
+            ->generate($invoice->payment_url);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Report Generation Implementation}
+\begin{lstlisting}[language=PHP]
+class InvoiceReport
+{
+    public function generateMonthlyReport(Carbon $month): array
+    {
+        $invoices = Invoice::whereMonth('created_at', $month)
+            ->with(['customer', 'items'])
+            ->get();
+
+        return [
+            'total_invoices' => $invoices->count(),
+            'total_amount' => [
+                'idr' => $invoices->sum(function ($invoice) {
+                    return $invoice->items->sum('amount_rupiah');
+                }),
+                'usd' => $invoices->sum(function ($invoice) {
+                    return $invoice->items->sum('amount_dollar');
+                }),
+            ],
+            'status_breakdown' => $invoices->groupBy('status')
+                ->map(fn ($group) => $group->count()),
+            'customer_breakdown' => $invoices->groupBy('customer_id')
+                ->map(function ($group) {
+                    return [
+                        'count' => $group->count(),
+                        'total' => $group->sum(function ($invoice) {
+                            return $invoice->items->sum('amount_rupiah');
+                        }),
+                    ];
+                }),
+        ];
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Currency Service Implementation}
+\begin{lstlisting}[language=PHP]
+class CurrencyService
+{
+    private $api_key;
+    private $cache_duration = 3600; // 1 jam
+
+    public function __construct()
+    {
+        $this->api_key = config('services.currency.api_key');
+    }
+
+    public function getLatestRate(): float
+    {
+        return Cache::remember('usd_rate', $this->cache_duration, function () {
+            $response = Http::get("https://api.exchangerate-api.com/v4/latest/USD", [
+                'apikey' => $this->api_key
+            ]);
+
+            if ($response->successful()) {
+                return $response->json()['rates']['IDR'];
+            }
+
+            throw new CurrencyServiceException('Failed to fetch exchange rate');
+        });
+    }
+
+    public function convertToRupiah(float $usdAmount): float
+    {
+        $rate = $this->getLatestRate();
+        return round($usdAmount * $rate, 2);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Command Line Interface Implementation}
+\begin{lstlisting}[language=PHP]
+class GenerateInvoiceReport extends Command
+{
+    protected $signature = 'invoice:report 
+        {month? : Bulan dalam format YYYY-MM} 
+        {--format=pdf : Format output (pdf/excel/csv)}';
+
+    protected $description = 'Generate laporan invoice bulanan';
+
+    public function handle(InvoiceReport $reporter)
+    {
+        $month = Carbon::parse($this->argument('month') ?? now());
+        $format = $this->option('format');
+
+        $report = $reporter->generateMonthlyReport($month);
+
+        match ($format) {
+            'pdf' => $this->generatePdf($report),
+            'excel' => $this->generateExcel($report),
+            'csv' => $this->generateCsv($report),
+            default => $this->error('Format tidak didukung'),
+        };
+
+        $this->info('Laporan berhasil dibuat!');
+    }
+}
+\end{lstlisting}
+
+Penjelasan komponen:
+\begin{itemize}
+\item \texttt{protected \$signature}:
+    \begin{itemize}
+    \item Mendefinisikan format perintah CLI
+    \item Parameter opsional untuk bulan
+    \item Option untuk format output
+    \item Syntax yang mudah dibaca
+    \end{itemize}
+
+\item \texttt{protected \$description}:
+    \begin{itemize}
+    \item Deskripsi perintah untuk dokumentasi
+    \item Muncul saat menjalankan \texttt{php artisan list}
+    \item Membantu pengguna memahami fungsi command
+    \end{itemize}
+
+\item \texttt{handle()}:
+    \begin{itemize}
+    \item Method utama yang dieksekusi
+    \item Dependency injection untuk reporter
+    \item Parsing parameter bulan
+    \item Pemilihan format output
+    \end{itemize}
+
+\item \texttt{match expression}:
+    \begin{itemize}
+    \item Switch case modern PHP 8+
+    \item Penanganan berbagai format output
+    \item Error handling untuk format tidak valid
+    \item Return value yang konsisten
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Notification System Implementation}
+\begin{lstlisting}[language=PHP]
+class InvoiceNotification extends Notification implements ShouldQueue
+{
+    public function __construct(private Invoice $invoice)
+    {
+        $this->afterCommit = true;
+    }
+
+    public function via($notifiable): array
+    {
+        return ['mail', 'database'];
+    }
+
+    public function toMail($notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject('Invoice #' . $this->invoice->id)
+            ->markdown('mail.invoice.created', [
+                'invoice' => $this->invoice,
+                'url' => URL::signedRoute('invoice.show', [
+                    'invoice' => $this->invoice->id
+                ])
+            ]);
+    }
+
+    public function toDatabase($notifiable): array
+    {
+        return [
+            'invoice_id' => $this->invoice->id,
+            'amount' => $this->invoice->total_amount,
+            'customer' => $this->invoice->customer->nama,
+            'status' => $this->invoice->status,
+        ];
+    }
+}
+\end{lstlisting}
+
+Penjelasan komponen:
+\begin{itemize}
+\item \texttt{ShouldQueue interface}:
+    \begin{itemize}
+    \item Implementasi antrian untuk notifikasi
+    \item Proses asynchronous
+    \item Peningkatan performa aplikasi
+    \item Retry mechanism untuk kegagalan
+    \end{itemize}
+
+\item \texttt{via()}:
+    \begin{itemize}
+    \item Menentukan channel notifikasi
+    \item Support multiple channels
+    \item Fleksibilitas pengiriman
+    \item Mudah dikonfigurasi
+    \end{itemize}
+
+\item \texttt{toMail()}:
+    \begin{itemize}
+    \item Konfigurasi email notification
+    \item Menggunakan markdown template
+    \item Signed URL untuk keamanan
+    \item Customizable content
+    \end{itemize}
+
+\item \texttt{toDatabase()}:
+    \begin{itemize}
+    \item Format data untuk penyimpanan di database
+    \item Struktur data yang konsisten
+    \item Tracking notifikasi
+    \item Query-friendly format
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Export Service Implementation}
+\begin{lstlisting}[language=PHP]
+class InvoiceExportService
+{
+    public function exportToExcel(Collection $invoices, string $filename): string
+    {
+        return Excel::download(
+            new InvoicesExport($invoices),
+            $filename
+        )->getFile()->getPathname();
+    }
+
+    public function exportToCsv(Collection $invoices, string $filename): string
+    {
+        return Excel::download(
+            new InvoicesExport($invoices),
+            $filename,
+            \Maatwebsite\Excel\Excel::CSV
+        )->getFile()->getPathname();
+    }
+
+    private function getExportColumns(): array
+    {
+        return [
+            'ID' => 'id',
+            'Customer' => 'customer.nama',
+            'Date' => 'invoice_date',
+            'Due Date' => 'due_date',
+            'Status' => 'status',
+            'Total (IDR)' => 'total_amount_idr',
+            'Total (USD)' => 'total_amount_usd',
+        ];
+    }
+}
+\end{lstlisting}
+
+Penjelasan komponen:
+\begin{itemize}
+\item \texttt{exportToExcel()}:
+    \begin{itemize}
+    \item Ekspor data ke format Excel
+    \item Parameter collection untuk batch processing
+    \item Kustomisasi nama file
+    \item Return path file hasil ekspor
+    \end{itemize}
+
+\item \texttt{exportToCsv()}:
+    \begin{itemize}
+    \item Ekspor data ke format CSV
+    \item Menggunakan library Maatwebsite Excel
+    \item Support karakter encoding
+    \item Optimasi untuk file besar
+    \end{itemize}
+
+\item \texttt{getExportColumns()}:
+    \begin{itemize}
+    \item Definisi kolom untuk ekspor
+    \item Mapping field database ke header
+    \item Support relasi database
+    \item Format yang konsisten
+    \end{itemize}
+\end{itemize}
+
+\subsection{Optimasi dan Performa}
+Beberapa teknik optimasi yang diimplementasikan dalam sistem:
+
+\begin{enumerate}
+\item \textbf{Database Query Optimization:}
+    \begin{itemize}
+    \item Penggunaan eager loading untuk menghindari N+1 query problem
+    \item Indexing pada kolom-kolom yang sering digunakan dalam pencarian
+    \item Query caching untuk data yang jarang berubah
+    \item Chunk processing untuk data dalam jumlah besar
+    \end{itemize}
+
+\item \textbf{Cache Implementation:}
+    \begin{itemize}
+    \item Caching kurs mata uang
+    \item Cache template PDF yang sering digunakan
+    \item Cache query database yang kompleks
+    \item Automatic cache invalidation
+    \end{itemize}
+
+\item \textbf{Background Processing:}
+    \begin{itemize}
+    \item Queue untuk pengiriman email
+    \item Async PDF generation
+    \item Scheduled report generation
+    \item Rate limiting untuk API calls
+    \end{itemize}
+
+\item \textbf{Resource Management:}
+    \begin{itemize}
+    \item Automatic cleanup untuk file temporary
+    \item Optimasi ukuran gambar
+    \item Memory usage monitoring
+    \item Connection pooling
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Security Measures}
+Implementasi keamanan sistem meliputi:
+
+\begin{enumerate}
+\item \textbf{Authentication:}
+    \begin{itemize}
+    \item Multi-factor authentication
+    \item Session management
+    \item Password policy enforcement
+    \item Login attempt limitation
+    \end{itemize}
+
+\item \textbf{Data Protection:}
+    \begin{itemize}
+    \item Encryption at rest
+    \item Secure file storage
+    \item Data backup routines
+    \item Access control lists
+    \end{itemize}
+
+\item \textbf{API Security:}
+    \begin{itemize}
+    \item Token-based authentication
+    \item Request validation
+    \item Rate limiting
+    \item CORS policy
+    \end{itemize}
+
+\item \textbf{Audit Trail:}
+    \begin{itemize}
+    \item Activity logging
+    \item Change tracking
+    \item User action history
+    \item System event monitoring
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Implementasi Kode Detail}
+
+\subsubsection{Model Invoice}
+\begin{lstlisting}[language=PHP]
+class Invoice extends Model
+{
+    protected $guarded = [];
+    use HasFactory;
+
+    protected $dates = [
+        'invoice_date',
+        'due_date',
+        'created_at',
+        'updated_at'
+    ];
+
+    public function Item(){
+        return $this->hasMany(Item::class);
+    }
+
+    public function Customer(){
+        return $this->belongsTo(Customer::class);
+    }
+}
+\end{lstlisting}
+
+Penjelasan komponen:
+\begin{itemize}
+\item \texttt{protected \$guarded = []}: 
+    \begin{itemize}
+    \item Mengizinkan mass assignment untuk semua atribut
+    \item Digunakan untuk operasi create dan update data
+    \item Perlu berhati-hati dengan keamanan input
+    \end{itemize}
+
+\item \texttt{protected \$dates}:
+    \begin{itemize}
+    \item Mendefinisikan kolom yang akan dikonversi ke Carbon
+    \item Memungkinkan manipulasi tanggal yang lebih mudah
+    \item Otomatis mengkonversi format database ke format PHP
+    \end{itemize}
+
+\item \texttt{public function Item()}:
+    \begin{itemize}
+    \item Relasi one-to-many dengan model Item
+    \item Memungkinkan akses \texttt{\$invoice->items}
+    \item Mendukung eager loading untuk optimasi query
+    \end{itemize}
+
+\item \texttt{public function Customer()}:
+    \begin{itemize}
+    \item Relasi many-to-one dengan model Customer
+    \item Memungkinkan akses \texttt{\$invoice->customer}
+    \item Foreign key constraint untuk integritas data
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{PDF Generation Service}
+\begin{lstlisting}[language=PHP]
+class PdfGenerationService
+{
+    public function generateInvoicePdf(Invoice $invoice): string
+    {
+        $pdf = PDF::loadView('invoices.pdf', [
+            'invoice' => $invoice,
+            'settings' => $this->getCompanySettings(),
+            'qrCode' => $this->generateQrCode($invoice),
+        ]);
+
+        $pdf->setPaper('a4');
+        
+        $filename = sprintf(
+            'invoice_%s_%s.pdf',
+            $invoice->id,
+            now()->format('Y-m-d')
+        );
+        
+        $path = storage_path("app/invoices/{$filename}");
+        $pdf->save($path);
+        
+        return $path;
+    }
+
+    private function generateQrCode(Invoice $invoice): string
+    {
+        return QrCode::format('svg')
+            ->size(100)
+            ->generate($invoice->payment_url);
+    }
+}
+\end{lstlisting}
+
+Penjelasan komponen:
+\begin{itemize}
+\item \texttt{generateInvoicePdf()}:
+    \begin{itemize}
+    \item Parameter: objek Invoice yang akan di-generate
+    \item Return: string path file PDF yang dihasilkan
+    \item Menggunakan view blade untuk template PDF
+    \item Menyertakan pengaturan perusahaan dan QR code
+    \end{itemize}
+
+\item \texttt{PDF::loadView()}:
+    \begin{itemize}
+    \item Memuat template blade untuk PDF
+    \item Menerima data yang akan dirender
+    \item Menggunakan library DomPDF
+    \item Mendukung styling CSS
+    \end{itemize}
+
+\item \texttt{setPaper()}:
+    \begin{itemize}
+    \item Mengatur ukuran kertas PDF
+    \item Default menggunakan A4
+    \item Mendukung orientasi portrait/landscape
+    \end{itemize}
+
+\item \texttt{generateQrCode()}:
+    \begin{itemize}
+    \item Membuat QR code untuk payment URL
+    \item Format SVG untuk kualitas tinggi
+    \item Ukuran 100x100 pixel
+    \item Mendukung error correction
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Currency Service}
+\begin{lstlisting}[language=PHP]
+class CurrencyService
+{
+    private $api_key;
+    private $cache_duration = 3600; // 1 jam
+
+    public function __construct()
+    {
+        $this->api_key = config('services.currency.api_key');
+    }
+
+    public function getLatestRate(): float
+    {
+        return Cache::remember('usd_rate', $this->cache_duration, function () {
+            $response = Http::get("https://api.exchangerate-api.com/v4/latest/USD", [
+                'apikey' => $this->api_key
+            ]);
+
+            if ($response->successful()) {
+                return $response->json()['rates']['IDR'];
+            }
+
+            throw new CurrencyServiceException('Failed to fetch exchange rate');
+        });
+    }
+
+    public function convertToRupiah(float $usdAmount): float
+    {
+        $rate = $this->getLatestRate();
+        return round($usdAmount * $rate, 2);
+    }
+}
+\end{lstlisting}
+
+Penjelasan komponen:
+\begin{itemize}
+\item \texttt{private \$api\_key}:
+    \begin{itemize}
+    \item Menyimpan API key untuk layanan kurs
+    \item Diambil dari konfigurasi aplikasi
+    \item Aman dari eksposur publik
+    \end{itemize}
+
+\item \texttt{private \$cache\_duration}:
+    \begin{itemize}
+    \item Durasi cache kurs (1 jam)
+    \item Mengurangi request ke API
+    \item Optimasi performa
+    \end{itemize}
+
+\item \texttt{getLatestRate()}:
+    \begin{itemize}
+    \item Mengambil kurs USD-IDR terbaru
+    \item Menggunakan sistem cache
+    \item Error handling untuk kegagalan API
+    \item Return nilai float kurs
+    \end{itemize}
+
+\item \texttt{convertToRupiah()}:
+    \begin{itemize}
+    \item Konversi USD ke IDR
+    \item Menggunakan kurs terbaru
+    \item Pembulatan 2 desimal
+    \item Return nilai dalam Rupiah
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Report Generation}
+\begin{lstlisting}[language=PHP]
+class InvoiceReport
+{
+    public function generateMonthlyReport(Carbon $month): array
+    {
+        $invoices = Invoice::whereMonth('created_at', $month)
+            ->with(['customer', 'items'])
+            ->get();
+
+        return [
+            'total_invoices' => $invoices->count(),
+            'total_amount' => [
+                'idr' => $invoices->sum(function ($invoice) {
+                    return $invoice->items->sum('amount_rupiah');
+                }),
+                'usd' => $invoices->sum(function ($invoice) {
+                    return $invoice->items->sum('amount_dollar');
+                }),
+            ],
+            'status_breakdown' => $invoices->groupBy('status')
+                ->map(fn ($group) => $group->count()),
+            'customer_breakdown' => $invoices->groupBy('customer_id')
+                ->map(function ($group) {
+                    return [
+                        'count' => $group->count(),
+                        'total' => $group->sum(function ($invoice) {
+                            return $invoice->items->sum('amount_rupiah');
+                        }),
+                    ];
+                }),
+        ];
+    }
+}
+\end{lstlisting}
+
+Penjelasan komponen:
+\begin{itemize}
+\item \texttt{generateMonthlyReport()}:
+    \begin{itemize}
+    \item Parameter: objek Carbon untuk bulan yang diinginkan
+    \item Return: array berisi statistik laporan
+    \item Menggunakan eager loading untuk optimasi
+    \item Menghitung berbagai metrik
+    \end{itemize}
+
+\item \texttt{whereMonth()}:
+    \begin{itemize}
+    \item Filter invoice berdasarkan bulan
+    \item Menggunakan kolom created\_at
+    \item Query builder Laravel
+    \end{itemize}
+
+\item \texttt{with()}:
+    \begin{itemize}
+    \item Eager loading relasi
+    \item Menghindari N+1 query problem
+    \item Meningkatkan performa
+    \end{itemize}
+
+\item \texttt{groupBy() dan map()}:
+    \begin{itemize}
+    \item Mengelompokkan data berdasarkan kriteria
+    \item Transformasi data untuk laporan
+    \item Kalkulasi statistik per kelompok
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Command Line Interface Implementation}
+\begin{lstlisting}[language=PHP]
+class GenerateInvoiceReport extends Command
+{
+    protected $signature = 'invoice:report 
+        {month? : Bulan dalam format YYYY-MM} 
+        {--format=pdf : Format output (pdf/excel/csv)}';
+
+    protected $description = 'Generate laporan invoice bulanan';
+
+    public function handle(InvoiceReport $reporter)
+    {
+        $month = Carbon::parse($this->argument('month') ?? now());
+        $format = $this->option('format');
+
+        $report = $reporter->generateMonthlyReport($month);
+
+        match ($format) {
+            'pdf' => $this->generatePdf($report),
+            'excel' => $this->generateExcel($report),
+            'csv' => $this->generateCsv($report),
+            default => $this->error('Format tidak didukung'),
+        };
+
+        $this->info('Laporan berhasil dibuat!');
+    }
+}
+\end{lstlisting}
+
+Penjelasan komponen:
+\begin{itemize}
+\item \texttt{protected \$signature}:
+    \begin{itemize}
+    \item Mendefinisikan format perintah CLI
+    \item Parameter opsional untuk bulan
+    \item Option untuk format output
+    \item Syntax yang mudah dibaca
+    \end{itemize}
+
+\item \texttt{protected \$description}:
+    \begin{itemize}
+    \item Deskripsi perintah untuk dokumentasi
+    \item Muncul saat menjalankan \texttt{php artisan list}
+    \item Membantu pengguna memahami fungsi command
+    \end{itemize}
+
+\item \texttt{handle()}:
+    \begin{itemize}
+    \item Method utama yang dieksekusi
+    \item Dependency injection untuk reporter
+    \item Parsing parameter bulan
+    \item Pemilihan format output
+    \end{itemize}
+
+\item \texttt{match expression}:
+    \begin{itemize}
+    \item Switch case modern PHP 8+
+    \item Penanganan berbagai format output
+    \item Error handling untuk format tidak valid
+    \item Return value yang konsisten
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Notification System Implementation}
+\begin{lstlisting}[language=PHP]
+class InvoiceNotification extends Notification implements ShouldQueue
+{
+    public function __construct(private Invoice $invoice)
+    {
+        $this->afterCommit = true;
+    }
+
+    public function via($notifiable): array
+    {
+        return ['mail', 'database'];
+    }
+
+    public function toMail($notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject('Invoice #' . $this->invoice->id)
+            ->markdown('mail.invoice.created', [
+                'invoice' => $this->invoice,
+                'url' => URL::signedRoute('invoice.show', [
+                    'invoice' => $this->invoice->id
+                ])
+            ]);
+    }
+
+    public function toDatabase($notifiable): array
+    {
+        return [
+            'invoice_id' => $this->invoice->id,
+            'amount' => $this->invoice->total_amount,
+            'customer' => $this->invoice->customer->nama,
+            'status' => $this->invoice->status,
+        ];
+    }
+}
+\end{lstlisting}
+
+Penjelasan komponen:
+\begin{itemize}
+\item \texttt{ShouldQueue interface}:
+    \begin{itemize}
+    \item Implementasi antrian untuk notifikasi
+    \item Proses asynchronous
+    \item Peningkatan performa aplikasi
+    \item Retry mechanism untuk kegagalan
+    \end{itemize}
+
+\item \texttt{via()}:
+    \begin{itemize}
+    \item Menentukan channel notifikasi
+    \item Support multiple channels
+    \item Fleksibilitas pengiriman
+    \item Mudah dikonfigurasi
+    \end{itemize}
+
+\item \texttt{toMail()}:
+    \begin{itemize}
+    \item Konfigurasi email notification
+    \item Menggunakan markdown template
+    \item Signed URL untuk keamanan
+    \item Customizable content
+    \end{itemize}
+
+\item \texttt{toDatabase()}:
+    \begin{itemize}
+    \item Format data untuk penyimpanan di database
+    \item Struktur data yang konsisten
+    \item Tracking notifikasi
+    \item Query-friendly format
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Export Service Implementation}
+\begin{lstlisting}[language=PHP]
+class InvoiceExportService
+{
+    public function exportToExcel(Collection $invoices, string $filename): string
+    {
+        return Excel::download(
+            new InvoicesExport($invoices),
+            $filename
+        )->getFile()->getPathname();
+    }
+
+    public function exportToCsv(Collection $invoices, string $filename): string
+    {
+        return Excel::download(
+            new InvoicesExport($invoices),
+            $filename,
+            \Maatwebsite\Excel\Excel::CSV
+        )->getFile()->getPathname();
+    }
+
+    private function getExportColumns(): array
+    {
+        return [
+            'ID' => 'id',
+            'Customer' => 'customer.nama',
+            'Date' => 'invoice_date',
+            'Due Date' => 'due_date',
+            'Status' => 'status',
+            'Total (IDR)' => 'total_amount_idr',
+            'Total (USD)' => 'total_amount_usd',
+        ];
+    }
+}
+\end{lstlisting}
+
+Penjelasan komponen:
+\begin{itemize}
+\item \texttt{exportToExcel()}:
+    \begin{itemize}
+    \item Ekspor data ke format Excel
+    \item Parameter collection untuk batch processing
+    \item Kustomisasi nama file
+    \item Return path file hasil ekspor
+    \end{itemize}
+
+\item \texttt{exportToCsv()}:
+    \begin{itemize}
+    \item Ekspor data ke format CSV
+    \item Menggunakan library Maatwebsite Excel
+    \item Support karakter encoding
+    \item Optimasi untuk file besar
+    \end{itemize}
+
+\item \texttt{getExportColumns()}:
+    \begin{itemize}
+    \item Definisi kolom untuk ekspor
+    \item Mapping field database ke header
+    \item Support relasi database
+    \item Format yang konsisten
+    \end{itemize}
+\end{itemize}
 
 \end{document}

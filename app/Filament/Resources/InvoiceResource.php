@@ -33,85 +33,18 @@ class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
     protected static ?string $navigationIcon = "heroicon-o-rectangle-stack";
+    
 
     public static function form(Form $form): Form
     {
         return $form->schema([
             Section::make("Invoice Details")
-                ->description("Enter invoice information")
-                ->icon("heroicon-o-document-text")
                 ->schema(static::getInvoiceDetailsSchema()),
-
-                Section::make("Items")
-                ->description("Add invoice items")
-                ->icon("heroicon-o-shopping-cart")
-                ->schema([
-                    Repeater::make("items")
-                        ->relationship("item")
-                        ->schema([
-                            TextInput::make("name")
-                                ->required()
-                                ->live()
-                                ->columnSpan(2),
-                            TextInput::make("description")->columnSpan(2),
-                            Select::make('is_dollar')
-                                ->label('Currency')
-                                ->options([
-                                    0 => 'IDR',
-                                    1 => 'USD'
-                                ])
-                                ->default(0)
-                                ->columnSpan(1),
-                            TextInput::make("quantity")
-                                ->default(1)
-                                ->live(onBlur: true)
-                                ->numeric()
-                                ->minValue(1)
-                                ->required()
-                                ->suffix("unit")
-                                ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
-                                    static::calculateAmounts($state, $set, $get)
-                                ),
-                            TextInput::make("price_rupiah")
-                                ->label("Harga (IDR)")
-                                ->columnSpan(2)
-                                ->hidden(fn (Get $get) => $get('is_dollar'))
-                                ->live(onBlur: true)
-                                ->numeric()
-                                ->prefix("Rp")
-                                ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
-                                    static::calculatePrices($state, $set, $get, 'rupiah')
-                                ),
-                            TextInput::make("price_dollar")
-                                ->label("Harga (USD)")
-                                ->hidden(fn (Get $get) => !$get('is_dollar'))
-                                ->live(onBlur: true)
-                                ->numeric()
-                                ->columnSpan(2)
-                                ->prefix('$')
-                                ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
-                                    static::calculatePrices($state, $set, $get, 'dollar')
-                                ),
-                            TextInput::make("amount_rupiah")
-                                ->label("Total (IDR)")
-                                ->disabled()
-                                ->dehydrated()
-                                ->prefix("Rp"),
-                            TextInput::make("amount_dollar")
-                                ->label("Total (USD)")
-                                ->disabled()
-                                ->dehydrated()
-                                ->prefix("$"),
-                        ])
-                        ->defaultItems(1)
-                        ->columnSpanFull()
-                        ->columns(8)
-                        ->collapsible()
-                        ->cloneable()
-                        ->itemLabel(fn(array $state): ?string => $state["name"] ?? null),
-                ]),
+            
+            Section::make("Items")
+                ->schema(static::getItemsSchema()),
         ]);
-        }
+    }
 
     public static function table(Table $table): Table
     {
@@ -272,6 +205,75 @@ class InvoiceResource extends Resource
             "index" => Pages\ListInvoices::route("/"),
             "create" => Pages\CreateInvoice::route("/create"),
             "edit" => Pages\EditInvoice::route("/{record}/edit"),
+        ];
+    }
+
+    protected static function getItemsSchema(): array
+    {
+        return [
+            Repeater::make("items")
+                ->relationship("item")
+                ->schema([
+                    TextInput::make("name")
+                        ->required()
+                        ->live()
+                        ->columnSpan(2),
+                    TextInput::make("description")->columnSpan(2),
+                    Select::make('is_dollar')
+                        ->label('Currency')
+                        ->options([
+                            0 => 'IDR',
+                            1 => 'USD'
+                        ])
+                        ->default(0)
+                        ->columnSpan(1),
+                    TextInput::make("quantity")
+                        ->default(1)
+                        ->live(onBlur: true)
+                        ->numeric()
+                        ->minValue(1)
+                        ->required()
+                        ->suffix("unit")
+                        ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
+                            static::calculateAmounts($state, $set, $get)
+                        ),
+                    TextInput::make("price_rupiah")
+                        ->label("Harga (IDR)")
+                        ->columnSpan(2)
+                        ->hidden(fn (Get $get) => $get('is_dollar'))
+                        ->live(onBlur: true)
+                        ->numeric()
+                        ->prefix("Rp")
+                        ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
+                            static::calculatePrices($state, $set, $get, 'rupiah')
+                        ),
+                    TextInput::make("price_dollar")
+                        ->label("Harga (USD)")
+                        ->hidden(fn (Get $get) => !$get('is_dollar'))
+                        ->live(onBlur: true)
+                        ->numeric()
+                        ->columnSpan(2)
+                        ->prefix('$')
+                        ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
+                            static::calculatePrices($state, $set, $get, 'dollar')
+                        ),
+                    TextInput::make("amount_rupiah")
+                        ->label("Total (IDR)")
+                        ->disabled()
+                        ->dehydrated()
+                        ->prefix("Rp"),
+                    TextInput::make("amount_dollar")
+                        ->label("Total (USD)")
+                        ->disabled()
+                        ->dehydrated()
+                        ->prefix("$"),
+                ])
+                ->defaultItems(1)
+                ->columnSpanFull()
+                ->columns(8)
+                ->collapsible()
+                ->cloneable()
+                ->itemLabel(fn(array $state): ?string => $state["name"] ?? null),
         ];
     }
 
