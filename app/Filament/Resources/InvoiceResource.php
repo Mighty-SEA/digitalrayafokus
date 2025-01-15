@@ -26,6 +26,7 @@ use App\Filament\Resources\InvoiceResource\Actions\SendInvoiceAction;
 use App\Filament\Resources\InvoiceResource\Actions\BulkActions;
 use Filament\Forms\Components\Group;
 use Illuminate\Contracts\View\View;
+use App\Filament\Resources\InvoiceResource\Actions\GenerateQuotationPdfAction;
 
 
 class InvoiceResource extends Resource
@@ -139,7 +140,7 @@ class InvoiceResource extends Resource
                     ->size('lg'),
 
                 TextColumn::make("item.amount_rupiah")
-                    ->label("Amount (IDR/USD)")
+                    ->label("Total (IDR)")
                     ->description(fn (Invoice $record): string => 
                         static::getAmountDescription($record)
                     )
@@ -243,6 +244,9 @@ class InvoiceResource extends Resource
                     ->color('primary')
                     ->tooltip('Send')
                     ->label('')
+                    ->size('md'),
+                
+                GenerateQuotationPdfAction::make()
                     ->size('md'),
             ])
             ->bulkActions([

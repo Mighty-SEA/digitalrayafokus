@@ -36,13 +36,13 @@ class SendInvoiceAction
                     ->setOption('isPhpEnabled', true)
                     ->setOption('defaultFont', 'DejaVu Sans');
 
-                $pdfPath = storage_path(
-                    'app/invoices/' .
-                        $record->id .
-                        '-' .
-                        $record->customer->nama .
-                        '.pdf'
-                );
+                $pdfPath = storage_path('app/invoices/' . $record->id . '-' . $record->customer->nama . '.pdf');
+
+                $directory = dirname($pdfPath);
+                if (!File::exists($directory)) {
+                    File::makeDirectory($directory, 0755, true);
+                }
+
                 $pdf->save($pdfPath);
 
                 if (!file_exists($pdfPath)) {
