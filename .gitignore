@@ -21,8 +21,9 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-/laporan/*
-!/laporan/BAB1.tex
-!/laporan/BAB2.tex
-!/laporan/BAB3.tex
-!/laporan/BAB4.tex
+/laporan/*.aux
+/laporan/*.log
+/laporan/*.out
+/laporan/*.pdf
+/laporan/*.synctex.gz
+/laporan/*.toc
