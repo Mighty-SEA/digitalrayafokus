@@ -21,6 +21,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\Navigation;
 use Filament\Navigation\NavigationItem;
+use Illuminate\Support\Facades\Storage;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -39,6 +40,7 @@ class AdminPanelProvider extends PanelProvider
             ->resources([
                 \App\Filament\Resources\InvoiceResource::class,
                 \App\Filament\Resources\SettingsResource::class,
+                \App\Filament\Resources\UserResource::class,
             ])
             ->discoverPages(
                 in: app_path("Filament/Pages"),
@@ -66,6 +68,7 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-cog')
                     ->url(fn(): string => SettingsResource::getUrl('index')),
             ])
+            ->profile()
             ->plugin(\Hasnayeen\Themes\ThemesPlugin::make());
     }
 }
