@@ -29,6 +29,12 @@ class DatabaseSeeder extends Seeder
                     'email' => 'Demo@demo.com',
                     'password' => Hash::make('demo'), // Hash password
                 ]);
+                User::factory()->create(
+                    [
+                        'name' => 'Admin',
+                        'email' => 'admin@digrafo.com',
+                        'password' => bcrypt('password123'),
+                    ]);
 
         // Run the Customer and Invoices seeders
         // $this->call([

@@ -6,21 +6,28 @@ use Illuminate\Database\Eloquent\Model;
 
 class Settings extends Model
 {
-    protected $table = 'settings';
-    protected $guarded = ['id'];
+    protected $table = 'app_settings';
+    
+    protected $fillable = [
+        'key',
+        'value',
+        'type'
+    ];
 
-    // Helper method to get setting value
-    public static function get($key)
+    public static function get($key, $default = null)
     {
-        return static::where('key', $key)->value('value');
+        $setting = self::where('key', $key)->first();
+        return $setting ? $setting->value : $default;
     }
 
-    // Helper method to set setting value
-    public static function set($key, $value)
+    public static function set($key, $value, $type = 'text')
     {
-        return static::updateOrCreate(
+        return self::updateOrCreate(
             ['key' => $key],
-            ['value' => $value]
+            [
+                'value' => $value,
+                'type' => $type
+            ]
         );
     }
 }

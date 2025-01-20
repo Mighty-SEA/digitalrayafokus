@@ -1,3 +1,67 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+/* Navbar Link Styling */
+.nav-link {
+    position: relative;
+    padding: 8px 0;
+    transition: color 0.3s ease;
+}
+
+.nav-link::before,
+.nav-link::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: #50D890;
+    transition: width 0.3s ease;
+}
+
+.nav-link::before {
+    top: 0;
+    transform: translateX(-50%);
+}
+
+.nav-link::after {
+    bottom: 0;
+    transform: translateX(-50%);
+}
+
+.nav-link:hover::before,
+.nav-link:hover::after {
+    width: 100%;
+}
+
+.nav-link:hover {
+}
+
+
+
+/* Search Bar Styling */
+#nav-search {
+    width: 0;
+    opacity: 0;
+    display: none;
+    transition: width 0.3s ease, opacity 0.3s ease;
+}
+
+#nav-search:not(.hidden) {
+    width: 150px; /* Ukuran input saat muncul */
+    opacity: 1;
+    display: inline-block;
+}
+
+/* Responsif untuk mobile */
+@media (max-width: 768px) {
+    .nav-link {
+        @apply block w-full text-center;
+    }
+
+    #nav-search:not(.hidden) {
+        width: 100%; /* Textbox lebih lebar di mobile */
+    }
+}

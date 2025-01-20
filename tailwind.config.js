@@ -12,7 +12,20 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Open Sans', 'sans-serif'],
+            },
+            colors: {
+                'biru': '#4F98CA',
+                'mint': '#00FFCA',
+                'head': '#088395',
+                'foot': '#0A4D68',
+                green: {
+                    500: '#22c55e',
+                },
+            },
+            transitionDuration: {
+                '300': '300ms',
+                '500': '500ms',
             },
         },
     },

@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Resources\SettingsResource;
+use App\Models\Settings;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -22,17 +23,36 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\Navigation;
 use Filament\Navigation\NavigationItem;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
+
+        try {
+            $settings = Schema::hasTable('app_settings') 
+                ? Settings::pluck('value', 'key')->all() 
+                : [];
+            
+            $companyName = $settings['company_name'] ?? 'Digital Raya Fokus';
+            $companyLogo = $settings['company_logo'] ?? 'asset/logo.png';
+        } catch (\Exception $e) {
+            $companyName = 'Digital Raya Fokus';
+            $companyLogo = 'asset/logo.png';
+        }
+
         return $panel
             ->default()
             ->id("admin")
             ->path("admin")
             ->login()
-            ->brandLogo(fn () => view('filament.brand-logo'))
+            ->brandName($companyName)
+            ->brandLogo(fn () => view('filament.custom.brand-logo', [
+                'logo' => asset($companyLogo),
+                'companyName' => $companyName
+            ]))
+            ->brandLogoHeight('2rem')
             ->sidebarCollapsibleOnDesktop()
             ->colors([
                 "primary" => Color::Amber,
@@ -41,6 +61,8 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Resources\InvoiceResource::class,
                 \App\Filament\Resources\SettingsResource::class,
                 \App\Filament\Resources\UserResource::class,
+                \App\Filament\Resources\LayananResource::class,
+                \App\Filament\Resources\PortfolioResource::class,
             ])
             ->discoverPages(
                 in: app_path("Filament/Pages"),
