@@ -110,8 +110,8 @@ class UserResource extends Resource
         ];
     }
 
-    public static function canAccess(): bool
-    {
-        return Auth::user()->is_admin;
-    }
+    // public static function canAccess(): bool
+    // {
+    //     return Auth::user()->is_admin;
+    // }
 }

@@ -36,7 +36,9 @@ class AdminPanelProvider extends PanelProvider
                 : [];
             
             $companyName = $settings['company_name'] ?? 'Digital Raya Fokus';
-            $companyLogo = $settings['company_logo'] ?? 'asset/logo.png';
+            $companyLogo = isset($settings['company_logo']) && Storage::disk('public')->exists($settings['company_logo']) 
+                ? 'storage/' . $settings['company_logo']
+                : 'asset/logo.png';
         } catch (\Exception $e) {
             $companyName = 'Digital Raya Fokus';
             $companyLogo = 'asset/logo.png';
@@ -63,6 +65,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Resources\UserResource::class,
                 \App\Filament\Resources\LayananResource::class,
                 \App\Filament\Resources\PortfolioResource::class,
+                \App\Filament\Resources\UserResource::class,
             ])
             ->discoverPages(
                 in: app_path("Filament/Pages"),
@@ -90,7 +93,6 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-cog')
                     ->url(fn(): string => SettingsResource::getUrl('index')),
             ])
-            ->profile()
             ->plugin(\Hasnayeen\Themes\ThemesPlugin::make());
     }
 }
