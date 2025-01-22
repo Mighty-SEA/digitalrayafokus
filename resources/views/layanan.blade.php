@@ -7,6 +7,19 @@
     <meta name="description" content="Layanan teknologi informasi komprehensif untuk mendukung transformasi digital bisnis Anda">
     <script src="https://kit.fontawesome.com/050b5dcfea.js" crossorigin="anonymous"></script>
     @vite('resources/css/app.css')
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "{{ $settings['company_name'] }}",
+        "url": "{{ url('/') }}",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "{{ url('/search?q={search_term_string}') }}",
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
 </head>
 <body class="bg-white">
     @include('layouts.header')

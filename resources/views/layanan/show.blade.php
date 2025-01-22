@@ -217,5 +217,19 @@
             animation-delay: 1s;
         }
     </style>
+
+    <nav class="container mx-auto px-4 py-4" aria-label="breadcrumb">
+        <ol class="flex items-center space-x-2 text-gray-600">
+            <li><a href="/" class="hover:text-blue-600">Beranda</a></li>
+            <li class="flex items-center space-x-2">
+                <span>/</span>
+                <a href="/layanan" class="hover:text-blue-600">Layanan</a>
+            </li>
+            <li class="flex items-center space-x-2">
+                <span>/</span>
+                <span class="text-blue-600">{{ $service['title'] }}</span>
+            </li>
+        </ol>
+    </nav>
 </body>
 </html> 

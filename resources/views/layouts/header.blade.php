@@ -10,7 +10,12 @@ $layanans = Layanan::where('is_active', true)
                    ->orderBy('order')
                    ->get();
 @endphp
-
+<meta name="robots" content="index, follow">
+<meta name="author" content="{{ $settings['company_name'] ?? 'PT. Digital Raya Fokus' }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ $settings['company_name'] ?? 'PT. Digital Raya Fokus' }}">
+<meta name="twitter:description" content="{{ $settings['company_description'] ?? 'Penyedia solusi teknologi informasi terpercaya' }}">
+<meta property="og:image" content="{{ asset($settings['company_logo'] ?? 'asset/logo.png') }}">
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -88,13 +93,13 @@ $layanans = Layanan::where('is_active', true)
                 <!-- Header Mobile Menu -->
                 <div class="flex justify-between items-center p-5 bg-head">
                     <div class="flex items-center space-x-3">
-                        @if(isset($settings['company_logo']) && $settings['company_logo'])
-                        <img src="{{ asset('storage/' . $settings['company_logo']) }}" 
-                             alt="logo {{ $settings['company_name'] ?? '' }}" 
-                             class="w-12 h-12">
+                        @if(isset($settings['company_logo2']) && $settings['company_logo2'])
+                        <img src="{{ asset('storage/' . $settings['company_logo2']) }}" 
+                        alt="Logo {{ $settings['company_name'] ?? 'Digital Raya Fokus' }}" 
+                             class="relative w-full max-w-lg mx-auto rounded-2xl transform group-hover:-translate-y-2 transition-transform duration-500">
                     @else
-                        <img src="{{ asset('images/logo.jpg') }}" 
-                             alt="logo" 
+                        <img src="{{ asset('asset/logo.png') }}" 
+                        alt="Logo {{ $settings['company_name'] ?? 'Digital Raya Fokus' }}" 
                              class="w-12 h-12">
                     @endif
                         <div class="flex flex-col">
@@ -198,4 +203,11 @@ $layanans = Layanan::where('is_active', true)
 
         
     </script>
+
+    <!-- Preload penting assets -->
+    <link rel="preload" href="{{ asset('css/app.css') }}" as="style">
+    <link rel="preload" href="{{ asset('js/app.js') }}" as="script">
+
+    <!-- Cache Control -->
+    <meta http-equiv="Cache-Control" content="max-age=31536000, public">
 </head>
