@@ -267,6 +267,7 @@ class InvoiceResource extends Resource
                         ->label("Harga (IDR)")
                         ->columnSpan(2)
                         ->disabled(fn (Get $get) => $get('is_dollar'))
+                        ->dehydrated()
                         ->live(onBlur: true)
                         ->numeric()
                         ->prefix("Rp")
