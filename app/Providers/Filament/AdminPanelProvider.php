@@ -50,7 +50,7 @@ class AdminPanelProvider extends PanelProvider
             ->path("admin")
             ->login()
             ->brandName($companyName)
-            ->brandLogo(fn () => view('filament.custom.brand-logo', [
+            ->brandLogo(fn () => view('filament.brand-logo', [
                 'logo' => asset($companyLogo),
                 'companyName' => $companyName
             ]))

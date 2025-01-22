@@ -226,6 +226,20 @@ class InvoiceResource extends Resource
                             1 => 'USD'
                         ])
                         ->default(0)
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set, Get $get) {
+                            if ($state) {
+                                $set('price_rupiah', null);
+                                if ($price_dollar = $get('price_dollar')) {
+                                    static::calculatePrices($price_dollar, $set, $get, 'dollar');
+                                }
+                            } else {
+                                $set('price_dollar', null);
+                                if ($price_rupiah = $get('price_rupiah')) {
+                                    static::calculatePrices($price_rupiah, $set, $get, 'rupiah');
+                                }
+                            }
+                        })
                         ->columnSpan(1),
                     TextInput::make("quantity")
                         ->default(1)
@@ -237,19 +251,10 @@ class InvoiceResource extends Resource
                         ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
                             static::calculateAmounts($state, $set, $get)
                         ),
-                    TextInput::make("price_rupiah")
-                        ->label("Harga (IDR)")
-                        ->columnSpan(2)
-                        ->hidden(fn (Get $get) => $get('is_dollar'))
-                        ->live(onBlur: true)
-                        ->numeric()
-                        ->prefix("Rp")
-                        ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
-                            static::calculatePrices($state, $set, $get, 'rupiah')
-                        ),
+
                     TextInput::make("price_dollar")
                         ->label("Harga (USD)")
-                        ->hidden(fn (Get $get) => !$get('is_dollar'))
+                        ->visible(fn (Get $get) => $get('is_dollar'))
                         ->live(onBlur: true)
                         ->numeric()
                         ->columnSpan(2)
@@ -257,14 +262,28 @@ class InvoiceResource extends Resource
                         ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
                             static::calculatePrices($state, $set, $get, 'dollar')
                         ),
+                        
+                    TextInput::make("price_rupiah")
+                        ->label("Harga (IDR)")
+                        ->columnSpan(2)
+                        ->disabled(fn (Get $get) => $get('is_dollar'))
+                        ->live(onBlur: true)
+                        ->numeric()
+                        ->prefix("Rp")
+                        ->afterStateUpdated(fn ($state, callable $set, Get $get) => 
+                            static::calculatePrices($state, $set, $get, 'rupiah')
+                        ),
+
                     TextInput::make("amount_rupiah")
                         ->label("Total (IDR)")
                         ->disabled()
+                        ->columnSpan(2)
                         ->dehydrated()
                         ->prefix("Rp"),
                     TextInput::make("amount_dollar")
                         ->label("Total (USD)")
                         ->disabled()
+                        ->columnSpan(2)
                         ->dehydrated()
                         ->prefix("$"),
                 ])
