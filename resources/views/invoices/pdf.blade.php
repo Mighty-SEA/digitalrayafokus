@@ -473,7 +473,10 @@
         </div>
 
         <div class="payment-info">
-            <strong>INFORMASI PEMBAYARAN:</strong>&nbsp;&nbsp;BRI&nbsp;&nbsp;|&nbsp;&nbsp;398329283298&nbsp;&nbsp;|&nbsp;&nbsp;a.n Wahyu
+            <strong>INFORMASI PEMBAYARAN:</strong>&nbsp;&nbsp;
+            {{ $settings['payment_bank'] ?? 'BRI' }}&nbsp;&nbsp;|&nbsp;&nbsp;
+            {{ $settings['payment_account'] ?? '398329283298' }}&nbsp;&nbsp;|&nbsp;&nbsp;
+            a.n {{ $settings['payment_name'] ?? 'Wahyu' }}
         </div>
 
         <div class="footer">

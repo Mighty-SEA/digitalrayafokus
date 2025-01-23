@@ -31,7 +31,10 @@ class SettingsSeeder extends Seeder
             'pt2' => 'Profil',
             'pt3' => 'Portofolio',
             'pt4' => 'Layanan',
-            'pt5' => 'Contact'
+            'pt5' => 'Contact',
+            'payment_bank' => 'BRI',
+            'payment_account' => '398329283298',
+            'payment_name' => 'Wahyu',
         ];
 
         foreach ($settings as $key => $value) {

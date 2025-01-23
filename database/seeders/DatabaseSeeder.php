@@ -16,25 +16,28 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create(
-            [
-                'name' => 'Hibban Habiburrahman',
-                'email' => 'hibban@mail.com',
-                'password' => Hash::make('12345678'), // Hash password
-            ]);
+        // Hapus factory dan buat user admin secara langsung
+        User::create([
+            'name' => 'Admin',
+            'email' => 'admin@digrafo.com',
+            'password' => Hash::make('password123'), // Gunakan Hash::make untuk konsistensi
+            'is_admin' => true,
+        ]);
 
-            User::factory()->create(
-                [
-                    'name' => 'Demo User',
-                    'email' => 'Demo@demo.com',
-                    'password' => Hash::make('demo'), // Hash password
-                ]);
-                User::factory()->create(
-                    [
-                        'name' => 'Admin',
-                        'email' => 'admin@digrafo.com',
-                        'password' => bcrypt('password123'),
-                    ]);
+        // Tambahan user lain jika diperlukan
+        User::create([
+            'name' => 'Hibban Habiburrahman',
+            'email' => 'hibban@mail.com',
+            'password' => Hash::make('12345678'),
+            'is_admin' => true,
+        ]);
+
+        User::create([
+            'name' => 'Demo User',
+            'email' => 'demo@demo.com',
+            'password' => Hash::make('demo'),
+            'is_admin' => true,
+        ]);
 
         // Run the Customer and Invoices seeders
         // $this->call([

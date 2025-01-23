@@ -20,7 +20,7 @@ class GenerateQuotationPdfAction extends Action
 
         $this->icon('heroicon-o-document')
             ->color('warning')
-            ->label('')
+            ->label('Generate Quotation')
             ->tooltip('Buat Penawaran')
             ->action(function ($record) {
                 $pdf = Pdf::loadView('invoices.quotation', [

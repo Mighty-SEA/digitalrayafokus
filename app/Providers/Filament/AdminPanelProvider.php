@@ -49,6 +49,8 @@ class AdminPanelProvider extends PanelProvider
             ->id("admin")
             ->path("admin")
             ->login()
+            ->registration(false)
+            ->authGuard('web')
             ->brandName($companyName)
             ->brandLogo(fn () => view('filament.brand-logo', [
                 'logo' => asset($companyLogo),
@@ -60,12 +62,20 @@ class AdminPanelProvider extends PanelProvider
                 "primary" => Color::Amber,
             ])
             ->resources([
+                // Menu Utama
                 \App\Filament\Resources\InvoiceResource::class,
+                \App\Filament\Resources\LayananResource::class,
+                
+                // Menu Content
+                \App\Filament\Resources\PortfolioResource::class,
+                
+                // Menu Pengaturan
                 \App\Filament\Resources\SettingsResource::class,
                 \App\Filament\Resources\UserResource::class,
-                \App\Filament\Resources\LayananResource::class,
-                \App\Filament\Resources\PortfolioResource::class,
-                \App\Filament\Resources\UserResource::class,
+            ])
+            ->navigationGroups([
+                'Content',
+                'Pengaturan'
             ])
             ->discoverPages(
                 in: app_path("Filament/Pages"),

@@ -31,6 +31,9 @@ class GeneratePdfAction
                         'phone' => Settings::get('company_phone'),
                         'address' => Settings::get('company_address'),
                         'logo' => Settings::get('company_logo'),
+                        'payment_bank' => Settings::get('payment_bank'),
+                        'payment_account' => Settings::get('payment_account'),
+                        'payment_name' => Settings::get('payment_name'),
                     ],
                 ]);
 

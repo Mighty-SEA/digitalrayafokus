@@ -41,8 +41,8 @@ class PortfolioResource extends Resource
                     ->visibility('public')
                     ->preserveFilenames()
                     ->maxSize(5120)
-                    ->enableOpen()
-                    ->enableDownload()
+                    ->openable()
+                    ->downloadable()
                     ->required(),
                 FileUpload::make('image2')
                     ->image()
@@ -51,8 +51,8 @@ class PortfolioResource extends Resource
                     ->visibility('public')
                     ->preserveFilenames()
                     ->maxSize(5120)
-                    ->enableOpen()
-                    ->enableDownload()
+                    ->openable()
+                    ->downloadable()
                     ->nullable(),
                 FileUpload::make('image3')
                     ->image()
@@ -61,8 +61,8 @@ class PortfolioResource extends Resource
                     ->visibility('public')
                     ->preserveFilenames()
                     ->maxSize(5120)
-                    ->enableOpen()
-                    ->enableDownload()
+                    ->openable()
+                    ->downloadable()
                     ->nullable(),
                 Forms\Components\TextInput::make('title')
                     ->required()

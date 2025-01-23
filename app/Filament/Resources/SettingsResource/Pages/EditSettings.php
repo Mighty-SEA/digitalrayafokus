@@ -14,6 +14,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Group;
 
 class EditSettings extends Page implements HasForms
 {
@@ -33,41 +35,53 @@ class EditSettings extends Page implements HasForms
     {
         return $form
             ->schema([
-                Section::make('Informasi Perusahaan')
+                Section::make('Informasi Utama')
+                    ->description('Pengaturan informasi dasar perusahaan')
                     ->schema([
                         TextInput::make('company_name')
                             ->label('Nama Perusahaan')
                             ->required(),
-                        FileUpload::make('company_logo')
-                            ->label('Logo Perusahaan')
-                            ->image()
-                            ->disk('public')
-                            ->directory('settings'),
-                        FileUpload::make('company_logo2')
-                            ->label('Logo Perusahaan 2')
-                            ->image()
-                            ->disk('public')
-                            ->directory('settings'),
-                        FileUpload::make('company_logo3')
-                            ->label('Logo Perusahaan 3')
-                            ->image()
-                            ->disk('public')
-                            ->directory('settings'),
                         Textarea::make('company_profile')
                             ->label('Profil Perusahaan')
                             ->rows(4),
                         Textarea::make('company_description')
-                            ->label('Deskripsi Perusahaan')
+                            ->label('Deskripsi Singkat')
                             ->rows(3),
+                    ])->columns(1),
+
+                Section::make('Logo & Branding')
+                    ->description('Pengaturan logo dan identitas visual')
+                    ->schema([
+                        FileUpload::make('company_logo')
+                            ->label('Logo Utama')
+                            ->image()
+                            ->disk('public')
+                            ->directory('settings'),
+                        FileUpload::make('company_logo2')
+                            ->label('Logo Alternatif')
+                            ->image()
+                            ->disk('public')
+                            ->directory('settings'),
+                        FileUpload::make('company_logo3')
+                            ->label('Logo Footer')
+                            ->image()
+                            ->disk('public')
+                            ->directory('settings'),
+                    ])->columns(3),
+
+                Section::make('Visi & Misi')
+                    ->description('Pengaturan visi dan misi perusahaan')
+                    ->schema([
                         Textarea::make('company_visi')
-                            ->label('Visi Perusahaan')
+                            ->label('Visi')
                             ->rows(3),
                         Textarea::make('company_misi')
-                            ->label('Misi Perusahaan')
+                            ->label('Misi')
                             ->rows(4),
-                    ]),
-                
+                    ])->columns(2),
+
                 Section::make('Kontak & Lokasi')
+                    ->description('Informasi kontak dan alamat')
                     ->schema([
                         TextInput::make('company_address')
                             ->label('Alamat'),
@@ -76,62 +90,81 @@ class EditSettings extends Page implements HasForms
                             ->email(),
                         TextInput::make('company_phone')
                             ->label('Telepon'),
-                    ]),
+                    ])->columns(3),
 
-                Section::make('SEO & Branding')
+                Section::make('SEO & Meta')
+                    ->description('Pengaturan untuk optimasi mesin pencari')
                     ->schema([
                         TextInput::make('company_tagline')
                             ->label('Tagline'),
                         Textarea::make('company_keywords')
                             ->label('Keywords SEO')
                             ->rows(2),
+                    ])->columns(2),
+
+                Section::make('Halaman Beranda')
+                    ->description('Pengaturan konten halaman utama')
+                    ->schema([
+                        Grid::make(2)->schema([
+                            Group::make([
+                                TextInput::make('tc1')
+                                    ->label('Judul Hero'),
+                                TextInput::make('dc1')
+                                    ->label('Deskripsi Hero'),
+                                FileUpload::make('ic1')
+                                    ->label('Gambar Hero')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('settings'),
+                            ]),
+                            Group::make([
+                                TextInput::make('tc2')
+                                    ->label('Judul Section 2'),
+                                TextInput::make('dc2')
+                                    ->label('Deskripsi Section 2'),
+                                FileUpload::make('ic2')
+                                    ->label('Gambar Section 2')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('settings'),
+                            ]),
+                        ]),
+                        Grid::make(2)->schema([
+                            FileUpload::make('ic3')
+                                ->label('Gambar Section 3')
+                                ->image()
+                                ->disk('public')
+                                ->directory('settings'),
+                            FileUpload::make('ic4')
+                                ->label('Gambar Section 4')
+                                ->image()
+                                ->disk('public')
+                                ->directory('settings'),
+                        ]),
                     ]),
 
-                Section::make('Konten Beranda')
+                Section::make('Menu & Navigasi')
+                    ->description('Pengaturan menu navigasi')
                     ->schema([
-                        TextInput::make('tc1')
-                            ->label('Judul Hero Section'),
-                        TextInput::make('dc1')
-                            ->label('Deskripsi Hero Section'),
-                        FileUpload::make('ic1')
-                            ->label('Gambar Hero')
-                            ->image()
-                            ->disk('public')
-                            ->directory('settings'),
-                        TextInput::make('tc2')
-                            ->label('Judul Section 2'),
-                        TextInput::make('dc2')
-                            ->label('Deskripsi Section 2'),
-                        FileUpload::make('ic2')
-                            ->label('Gambar Section 2')
-                            ->image()
-                            ->disk('public')
-                            ->directory('settings'),
-                        FileUpload::make('ic3')
-                            ->label('Gambar Section 3')
-                            ->image()
-                            ->disk('public')
-                            ->directory('settings'),
-                        FileUpload::make('ic4')
-                            ->label('Gambar Section 4')
-                            ->image()
-                            ->disk('public')
-                            ->directory('settings'),
-                    ]),
+                        TextInput::make('pt1')->label('Menu 1'),
+                        TextInput::make('pt2')->label('Menu 2'), 
+                        TextInput::make('pt3')->label('Menu 3'),
+                        TextInput::make('pt4')->label('Menu 4'),
+                        TextInput::make('pt5')->label('Menu 5'),
+                    ])->columns(5),
 
-                Section::make('Menu Navigasi')
+                Section::make('Informasi Pembayaran')
+                    ->description('Pengaturan rekening pembayaran')
                     ->schema([
-                        TextInput::make('pt1')
-                            ->label('Menu 1'),
-                        TextInput::make('pt2')
-                            ->label('Menu 2'),
-                        TextInput::make('pt3')
-                            ->label('Menu 3'),
-                        TextInput::make('pt4')
-                            ->label('Menu 4'),
-                        TextInput::make('pt5')
-                            ->label('Menu 5'),
-                    ]),
+                        TextInput::make('payment_bank')
+                            ->label('Nama Bank')
+                            ->placeholder('Contoh: BRI'),
+                        TextInput::make('payment_account')
+                            ->label('Nomor Rekening')
+                            ->placeholder('Contoh: 398329283298'),
+                        TextInput::make('payment_name')
+                            ->label('Nama Pemilik'),
+                    ])->columns(3),
             ])
             ->statePath('data');
     }

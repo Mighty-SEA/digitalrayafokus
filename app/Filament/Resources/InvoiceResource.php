@@ -32,7 +32,8 @@ use App\Filament\Resources\InvoiceResource\Actions\GenerateQuotationPdfAction;
 class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
-    protected static ?string $navigationIcon = "heroicon-o-rectangle-stack";
+    protected static ?string $navigationIcon = "heroicon-o-document-text";
+    protected static ?int $navigationSort = 1;
     
 
     public static function form(Form $form): Form
@@ -180,6 +181,8 @@ class InvoiceResource extends Resource
                     ->size('md'),
                 
                 GenerateQuotationPdfAction::make()
+                    ->tooltip('Quotation')
+                    ->label('')
                     ->size('md'),
             ])
             ->bulkActions([
