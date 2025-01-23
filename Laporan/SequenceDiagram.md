@@ -7,16 +7,13 @@ sequenceDiagram
     participant Calc as 🧮 CalculationService
     participant PDF as 📎 PDF Generator
     participant Email as ✉️ Mail Service
-    participant DB as 💾 Database
 
     %% Create Invoice Flow
     rect rgb(240, 248, 255)
-        Note over User,DB: Alur Pembuatan Invoice
+        Note over User,Email: Alur Pembuatan Invoice
         User->>+UI: Buat Invoice Baru
         UI->>+IR: CreateInvoice
         IR->>+Invoice: create(invoice_data)
-        Invoice->>+DB: save()
-        DB-->>-Invoice: success
         Invoice-->>-IR: return invoice
         IR-->>-UI: show success notification
         UI-->>-User: Tampilkan Invoice
@@ -24,7 +21,7 @@ sequenceDiagram
 
     %% Currency Conversion Flow
     rect rgb(230, 230, 250)
-        Note over User,DB: Alur Konversi Mata Uang
+        Note over User,Email: Alur Konversi Mata Uang
         User->>+UI: Input Harga (IDR/USD)
         UI->>+IR: calculatePrices()
         IR->>+Calc: convertCurrency()
@@ -42,13 +39,11 @@ sequenceDiagram
 
     %% Generate PDF Flow
     rect rgb(255, 245, 238)
-        Note over User,DB: Alur Generate PDF
+        Note over User,Email: Alur Generate PDF
         User->>+UI: Generate PDF
         UI->>+IR: GeneratePdfAction
         IR->>+PDF: loadView('invoices.pdf')
         PDF->>+Invoice: get invoice data
-        Invoice->>+DB: fetch related data
-        DB-->>-Invoice: return data
         Invoice-->>-PDF: return complete data
         PDF-->>-IR: return PDF stream
         IR-->>-UI: download PDF
@@ -57,15 +52,13 @@ sequenceDiagram
 
     %% Send Invoice Flow
     rect rgb(240, 255, 240)
-        Note over User,DB: Alur Pengiriman Invoice
+        Note over User,Email: Alur Pengiriman Invoice
         User->>+UI: Kirim Invoice
         UI->>+IR: SendInvoiceAction
         IR->>+PDF: generate PDF
         PDF-->>-IR: PDF file
         IR->>+Email: send(InvoiceMail)
         Email->>+Invoice: get invoice data
-        Invoice->>+DB: fetch data
-        DB-->>-Invoice: return data
         Invoice-->>-Email: complete data
         Email-->>-IR: email sent
         IR-->>-UI: show success notification
@@ -74,12 +67,10 @@ sequenceDiagram
 
     %% Update Status Flow
     rect rgb(255, 250, 240)
-        Note over User,DB: Alur Update Status
+        Note over User,Email: Alur Update Status
         User->>+UI: Update Status
         UI->>+IR: updateStatus
         IR->>+Invoice: update(status)
-        Invoice->>+DB: save new status
-        DB-->>-Invoice: success
         Invoice-->>-IR: return updated invoice
         IR-->>-UI: show success notification
         UI-->>-User: Tampilkan Status Baru
