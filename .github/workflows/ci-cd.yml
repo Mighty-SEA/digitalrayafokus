@@ -3,10 +3,10 @@ name: Laravel CI/CD
 on:
   push:
     branches:
-      - production
+      - Production
   pull_request:
     branches:
-      - production
+      - Production
 
 jobs:
   laravel-tests:
