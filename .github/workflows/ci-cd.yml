@@ -3,10 +3,10 @@ name: Laravel CI/CD
 on:
   push:
     branches:
-      - Production
+      - main
   pull_request:
     branches:
-      - Production
+      - main
 
 jobs:
   laravel-tests:
@@ -19,7 +19,7 @@ jobs:
       uses: shivammathur/setup-php@v2
       with:
         php-version: '8.2' # Sesuaikan dengan versi PHP yang Anda gunakan
-        extensions: mbstring, bcmath, pdo_mysql
+        extensions: mbstring, bcmath, pdo_mysql, zip
         ini-values: post_max_size=256M, upload_max_filesize=256M
         coverage: xdebug
 
