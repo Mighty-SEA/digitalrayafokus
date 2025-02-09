@@ -68,3 +68,58 @@ Route::get('/layanan/{slug}', [LayananController::class, 'show'])->name('layanan
 
 Route::get('/portofolio', [PortfolioController::class, 'index'])->name('portofolio');
 Route::get('/portofolio/{id}', [PortfolioController::class, 'show'])->name('portfolio.show');
+
+// Preview Invoice
+// Route::get('/invoice-preview', function () {
+//     // Data dummy invoice
+//     $invoice = new \App\Models\Invoice([
+//         'id' => 123456,
+//         'date' => now(),
+//         'current_dollar' => 15000,
+//         'status' => 'pending',
+//         'payment_bank' => 'BCA',
+//         'payment_account' => '1234567890',
+//         'payment_name' => 'PT Digital Raya Fokus',
+//     ]);
+
+//     // Data dummy customer
+//     $invoice->customer = new \App\Models\Customer([
+//         'nama' => 'John Doe',
+//         'phone' => '081234567890',
+//         'email' => 'john.doe@example.com'
+//     ]);
+
+//     // Data dummy items
+//     $invoice->item = collect([
+//         new \App\Models\Item([
+//             'name' => 'Web Development',
+//             'description' => 'Pembuatan website company profile',
+//             'quantity' => 1,
+//             'price_rupiah' => 10000000,
+//             'amount_rupiah' => 10000000,
+//             'is_dollar' => false
+//         ]),
+//         new \App\Models\Item([
+//             'name' => 'Domain & Hosting',
+//             'description' => 'Pembelian domain dan hosting 1 tahun',
+//             'quantity' => 1,
+//             'price_dollar' => 50,
+//             'amount_dollar' => 50,
+//             'is_dollar' => true
+//         ])
+//     ]);
+
+//     return view('invoices.pdf3', [
+//         'invoice' => $invoice,
+//         'settings' => [
+//             'name' => 'PT Digital Raya Fokus',
+//             'email' => 'info@digitalrayafokus.com',
+//             'phone' => '+62 812-3456-7890',
+//             'address' => 'Jl. Kapten Sarwono No.32, Banjaran Wetan, Kec. Banjaran',
+//             'logo' => 'asset/logo2.png',
+//             'payment_bank' => 'BCA',
+//             'payment_account' => '1234567890',
+//             'payment_name' => 'PT Digital Raya Fokus',
+//         ],
+//     ]);
+// })->name('invoice.preview');

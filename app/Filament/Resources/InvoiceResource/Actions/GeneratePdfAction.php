@@ -23,7 +23,7 @@ class GeneratePdfAction
                     $item->description = mb_convert_encoding($item->description, 'UTF-8', 'auto');
                 });
 
-                $pdf = Pdf::loadView('invoices.pdf', [
+                $pdf = Pdf::loadView('invoices.pdf3', [
                     'invoice' => $record,
                     'settings' => [
                         'name' => Settings::get('company_name'),
@@ -35,7 +35,9 @@ class GeneratePdfAction
                         'payment_account' => Settings::get('payment_account'),
                         'payment_name' => Settings::get('payment_name'),
                     ],
-                ]);
+                ])
+                ->setPaper('a4', 'portrait');
+
 
                 return response()->stream(
                     function () use ($pdf) {
