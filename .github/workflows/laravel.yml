@@ -56,6 +56,7 @@ jobs:
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       run: php artisan migrate
 
+    # Uncomment this section if you want to run tests
     # - name: Run tests
     #   env:
     #     DB_CONNECTION: mysql
