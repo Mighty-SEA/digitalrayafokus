@@ -6,6 +6,7 @@ use App\Models\Settings;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\LayananController;
+use App\Http\Controllers\ChatbotController;
 
 /*
 |--------------------------------------------------------------------------
@@ -68,6 +69,11 @@ Route::get('/layanan/{slug}', [LayananController::class, 'show'])->name('layanan
 
 Route::get('/portofolio', [PortfolioController::class, 'index'])->name('portofolio');
 Route::get('/portofolio/{id}', [PortfolioController::class, 'show'])->name('portfolio.show');
+
+// Chatbot Routes
+Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot.index');
+Route::post('/chatbot/message', [ChatbotController::class, 'processMessage'])->name('chatbot.message');
+Route::get('/chatbot/history', [ChatbotController::class, 'getConversationHistory'])->name('chatbot.history');
 
 // Preview Invoice
 // Route::get('/invoice-preview', function () {

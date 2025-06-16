@@ -24,6 +24,7 @@ use Filament\Navigation\Navigation;
 use Filament\Navigation\NavigationItem;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Config;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -51,12 +52,10 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->registration(false)
             ->authGuard('web')
-            ->brandName($companyName)
-            ->brandLogo(fn () => view('filament.brand-logo', [
-                'logo' => asset($companyLogo),
-                'companyName' => $companyName
-            ]))
-            ->brandLogoHeight('2rem')
+            ->brandName(isset($settings['company_name']) ? $settings['company_name'] : 'PT Digital Raya Fokus')
+            ->brandLogo(isset($settings['company_logo2']) && $settings['company_logo2'] ? asset('storage/' . $settings['company_logo2']) : asset('asset/logo.png'))
+            ->brandLogoHeight('3rem')
+            ->favicon(isset($settings['company_favicon']) && $settings['company_favicon'] ? asset('storage/' . $settings['company_favicon']) : asset('asset/logo.png'))
             ->sidebarCollapsibleOnDesktop()
             ->colors([
                 "primary" => Color::Amber,
@@ -69,20 +68,30 @@ class AdminPanelProvider extends PanelProvider
                 // Menu Content
                 \App\Filament\Resources\PortfolioResource::class,
                 
+                // Menu Chatbot
+                \App\Filament\Resources\ChatbotConversationResource::class,
+                \App\Filament\Resources\ChatbotFaqResource::class,
+                
                 // Menu Pengaturan
                 \App\Filament\Resources\SettingsResource::class,
                 \App\Filament\Resources\UserResource::class,
             ])
             ->navigationGroups([
-                'Content',
-                'Pengaturan'
+                'Invoices',
+                'Master Data',
+                'Chatbot Management',
+                'User Management',
+                'Settings',
             ])
             ->discoverPages(
                 in: app_path("Filament/Pages"),
                 for: "App\\Filament\\Pages"
             )
             ->pages([Pages\Dashboard::class])
-            ->widgets([\App\Filament\Widgets\StatsOverview::class])
+            ->widgets([
+                Widgets\AccountWidget::class,
+                Widgets\FilamentInfoWidget::class,
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -100,8 +109,8 @@ class AdminPanelProvider extends PanelProvider
             ->userMenuItems([
                 MenuItem::make()
                     ->label('Settings')
-                    ->icon('heroicon-o-cog')
-                    ->url(fn(): string => SettingsResource::getUrl('index')),
+                    ->url(fn (): string => SettingsResource::getUrl())
+                    ->icon('heroicon-o-cog-6-tooth'),
             ])
             ->plugin(\Hasnayeen\Themes\ThemesPlugin::make());
     }

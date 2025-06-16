@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  chatbot:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./python:/app
+    environment:
+      - PYTHONUNBUFFERED=1 
