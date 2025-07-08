@@ -3,60 +3,86 @@
 namespace App\Filament\Widgets;
 
 use App\Models\ChatbotConversation;
+use App\Models\ChatbotFaq;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ChatbotOverview extends BaseWidget
 {
-    protected static ?string $pollingInterval = '15s';
+    protected static ?int $sort = 1;
 
     protected function getStats(): array
     {
+        // Total percakapan
         $totalConversations = ChatbotConversation::count();
-        $phpResponses = ChatbotConversation::where('source', 'php')->count();
-        $pythonResponses = ChatbotConversation::where('source', 'python')->count();
         
-        $sentimentCounts = ChatbotConversation::whereNotNull('sentiment')
-            ->select('sentiment', DB::raw('count(*) as count'))
-            ->groupBy('sentiment')
-            ->pluck('count', 'sentiment')
-            ->toArray();
-            
-        $positiveCount = $sentimentCounts['positive'] ?? 0;
-        $negativeCount = $sentimentCounts['negative'] ?? 0;
-        $neutralCount = $sentimentCounts['neutral'] ?? 0;
+        // Percakapan hari ini
+        $todayConversations = ChatbotConversation::whereDate('created_at', Carbon::today())->count();
         
-        $totalSentimentAnalyzed = $positiveCount + $negativeCount + $neutralCount;
-        $positivePercentage = $totalSentimentAnalyzed > 0 
-            ? round(($positiveCount / $totalSentimentAnalyzed) * 100) 
+        // Persentase pertumbuhan percakapan dibanding hari sebelumnya
+        $yesterdayConversations = ChatbotConversation::whereDate('created_at', Carbon::yesterday())->count();
+        $conversationGrowth = $yesterdayConversations > 0 
+            ? round((($todayConversations - $yesterdayConversations) / $yesterdayConversations) * 100, 1) 
             : 0;
             
-        $sessionsCount = ChatbotConversation::distinct('session_id')->count('session_id');
-        $avgMessagesPerSession = $sessionsCount > 0
-            ? round($totalConversations / $sessionsCount, 1)
+        // Total FAQ
+        $totalFaq = ChatbotFaq::count();
+        
+        // FAQ aktif
+        $activeFaq = ChatbotFaq::where('is_active', true)->count();
+        
+        // Rata-rata sentimen positif (dalam persen)
+        $sentimentStats = DB::table('chatbot_conversations')
+            ->whereNotNull('sentiment')
+            ->selectRaw('
+                SUM(CASE WHEN sentiment = "positive" THEN 1 ELSE 0 END) as positive_count,
+                COUNT(*) as total
+            ')
+            ->first();
+            
+        $positivePercent = $sentimentStats && $sentimentStats->total > 0
+            ? round(($sentimentStats->positive_count / $sentimentStats->total) * 100, 1)
             : 0;
-
+        
         return [
             Stat::make('Total Percakapan', $totalConversations)
-                ->description('Total pesan yang diproses')
+                ->description('Seluruh percakapan chatbot')
                 ->descriptionIcon('heroicon-m-chat-bubble-left-right')
                 ->color('primary'),
-                
-            Stat::make('Total Sesi', $sessionsCount)
-                ->description("Rata-rata $avgMessagesPerSession pesan per sesi")
-                ->descriptionIcon('heroicon-m-user-group')
-                ->color('success'),
-                
-            Stat::make('Sentimen Positif', "$positivePercentage%")
-                ->description("$positiveCount dari $totalSentimentAnalyzed dianalisis")
+            
+            Stat::make('Percakapan Hari Ini', $todayConversations)
+                ->description($conversationGrowth > 0 ? "+$conversationGrowth% dari kemarin" : "$conversationGrowth% dari kemarin")
+                ->descriptionIcon($conversationGrowth >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
+                ->color($conversationGrowth >= 0 ? 'success' : 'danger')
+                ->chart([
+                    $this->getHourlyConversations(7),
+                    $this->getHourlyConversations(6),
+                    $this->getHourlyConversations(5),
+                    $this->getHourlyConversations(4),
+                    $this->getHourlyConversations(3),
+                    $this->getHourlyConversations(2),
+                    $this->getHourlyConversations(1),
+                    $this->getHourlyConversations(0),
+                ]),
+            
+            Stat::make('Sentimen Positif', "$positivePercent%")
+                ->description('Dari semua percakapan')
                 ->descriptionIcon('heroicon-m-face-smile')
-                ->color('success'),
+                ->color($positivePercent >= 70 ? 'success' : ($positivePercent >= 40 ? 'warning' : 'danger')),
                 
-            Stat::make('Sumber Respons', "PHP: $phpResponses | Python: $pythonResponses")
-                ->description('Jumlah respons berdasarkan sumber')
-                ->descriptionIcon('heroicon-m-code-bracket')
-                ->color('warning'),
+            Stat::make('FAQ Aktif', "$activeFaq dari $totalFaq")
+                ->description('Basis pengetahuan chatbot')
+                ->descriptionIcon('heroicon-m-document-text')
+                ->color('primary'),
         ];
+    }
+    
+    protected function getHourlyConversations(int $hoursAgo): int
+    {
+        return ChatbotConversation::where('created_at', '>=', now()->subHours($hoursAgo + 1))
+            ->where('created_at', '<', now()->subHours($hoursAgo))
+            ->count();
     }
 } 

@@ -157,6 +157,73 @@
     }
 }
 
+/* NLP Details Styling */
+.nlp-details {
+    margin-top: 5px;
+    font-size: 0.8em;
+}
+
+.nlp-toggle {
+    background-color: #f1f1f1;
+    border: none;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 0.9em;
+    cursor: pointer;
+    color: #666;
+}
+
+.nlp-toggle:hover {
+    background-color: #e0e0e0;
+}
+
+.nlp-details-content {
+    background-color: #f8f8f8;
+    padding: 8px;
+    border-radius: 8px;
+    margin-top: 5px;
+    color: #333;
+}
+
+.sentiment {
+    padding: 3px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+.sentiment.positive {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.sentiment.negative {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.sentiment.neutral {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+.keywords {
+    margin-bottom: 5px;
+}
+
+.entities {
+    margin-top: 5px;
+}
+
+.entity {
+    display: inline-block;
+    background-color: #e2e3e5;
+    padding: 2px 5px;
+    border-radius: 4px;
+    margin-right: 5px;
+    margin-bottom: 3px;
+}
+
 /* Responsif untuk Perangkat Mobile */
 @media (max-width: 480px) {
     .chat-widget-container {

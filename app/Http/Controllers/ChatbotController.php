@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Chatbot\ChatbotService;
-use App\Chatbot\PythonChatbotService;
 use App\Models\ChatbotConversation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -12,12 +11,10 @@ use Illuminate\Support\Facades\Log;
 class ChatbotController extends Controller
 {
     protected $chatbotService;
-    protected $pythonChatbotService;
 
-    public function __construct(ChatbotService $chatbotService, PythonChatbotService $pythonChatbotService)
+    public function __construct(ChatbotService $chatbotService)
     {
         $this->chatbotService = $chatbotService;
-        $this->pythonChatbotService = $pythonChatbotService;
     }
 
     /**
@@ -40,16 +37,31 @@ class ChatbotController extends Controller
 
             $userMessage = $request->input('message');
             $sessionId = $request->input('session_id', Str::uuid()->toString());
-            $processedData = null;
             $source = 'php';
-            $sentiment = null;
             
             Log::info('Menerima pesan chatbot:', [
                 'message' => $userMessage,
                 'session_id' => $sessionId
             ]);
             
-            // Coba gunakan PHP chatbot untuk memastikan responsnya
+            // Ekstrak keywords untuk informasi NLP
+            $keywords = $this->chatbotService->extractKeywords($userMessage);
+            
+            // Analisis sentimen
+            $sentiment = $this->chatbotService->analyzeSentiment($userMessage);
+            
+            // Siapkan data pemrosesan NLP sederhana
+            $processedData = [
+                'sentiment' => [
+                    'sentiment' => $sentiment,
+                    'score' => ($sentiment === 'positive' ? 0.8 : ($sentiment === 'negative' ? -0.8 : 0))
+                ],
+                'keywords' => $keywords,
+                'entities' => [],
+                'tokens' => explode(' ', $userMessage)
+            ];
+            
+            // Dapatkan respon chatbot
             $response = $this->chatbotService->processInput($userMessage);
             
             // Cek apakah sudah ada percakapan untuk sesi ini
@@ -60,6 +72,11 @@ class ChatbotController extends Controller
                 // Gabungkan pesan sebelumnya dengan pesan baru
                 $conversation->user_message .= "\n---\n" . $userMessage;
                 $conversation->bot_response .= "\n---\n" . $response;
+                
+                // Simpan data pemrosesan NLP
+                $conversation->processed_data = json_encode($processedData);
+                $conversation->source = $source;
+                $conversation->sentiment = $sentiment;
                 $conversation->save();
                 
                 Log::info('Percakapan sesi berhasil diperbarui');
@@ -71,7 +88,7 @@ class ChatbotController extends Controller
                         'session_id' => $sessionId,
                         'user_message' => $userMessage,
                         'bot_response' => $response,
-                        'processed_data' => $processedData,
+                        'processed_data' => json_encode($processedData),
                         'source' => $source,
                         'sentiment' => $sentiment,
                     ]);
@@ -87,6 +104,10 @@ class ChatbotController extends Controller
                 'message' => $response,
                 'session_id' => $sessionId,
                 'processed_data' => $processedData,
+                'nlp_info' => [
+                    'sentiment' => $sentiment,
+                    'keywords' => $keywords,
+                ]
             ]);
         } catch (\Exception $e) {
             Log::error('Error pada chatbot: ' . $e->getMessage());

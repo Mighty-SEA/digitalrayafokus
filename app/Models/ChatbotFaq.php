@@ -83,4 +83,33 @@ class ChatbotFaq extends Model
             ->get()
             ->groupBy('category');
     }
+    
+    /**
+     * Format FAQ untuk dikirim ke Python Chatbot
+     *
+     * @return array
+     */
+    public static function formatForPythonChatbot()
+    {
+        $faqs = self::where('is_active', true)
+            ->orderBy('priority', 'desc')
+            ->get();
+        
+        $formatted = [];
+        foreach ($faqs as $faq) {
+            $category = $faq->category ?: 'general';
+            
+            if (!isset($formatted[$category])) {
+                $formatted[$category] = [];
+            }
+            
+            $formatted[$category][] = [
+                'question' => $faq->question,
+                'answer' => $faq->answer,
+                'keywords' => $faq->keywords
+            ];
+        }
+        
+        return $formatted;
+    }
 } 

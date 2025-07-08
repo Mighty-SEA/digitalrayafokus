@@ -24,6 +24,18 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('chatbot_session_id', sessionId);
     }
     
+    // Debug mode
+    const isDebugMode = localStorage.getItem('chatbot_debug_mode') === 'true';
+    
+    // Toggle debug mode dengan Ctrl+Shift+D
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+            const newDebugMode = !isDebugMode;
+            localStorage.setItem('chatbot_debug_mode', newDebugMode);
+            alert(`Debug mode ${newDebugMode ? 'enabled' : 'disabled'}. Please refresh the page.`);
+        }
+    });
+    
     // Memuat riwayat percakapan jika ada
     loadConversationHistory();
     
@@ -101,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Tampilkan respons dari chatbot setelah delay singkat
                 setTimeout(() => {
-                    addMessage(data.message);
+                    addMessage(data.message, false, data.processed_data);
                 }, 500);
             })
             .catch(error => {
@@ -119,8 +131,9 @@ document.addEventListener('DOMContentLoaded', function() {
      * Fungsi untuk menambahkan pesan ke area chat
      * @param {string} message - Isi pesan
      * @param {boolean} isUser - true jika pesan dari user, false jika dari bot
+     * @param {object} processedData - Data NLP yang diproses (opsional)
      */
-    function addMessage(message, isUser = false) {
+    function addMessage(message, isUser = false, processedData = null) {
         const messageDiv = document.createElement('div');
         messageDiv.className = isUser ? 'message user' : 'message bot';
         
@@ -129,6 +142,71 @@ document.addEventListener('DOMContentLoaded', function() {
         messageContent.textContent = message;
         
         messageDiv.appendChild(messageContent);
+        
+        // Jika dalam debug mode dan ada data NLP, tambahkan informasi tambahan
+        if (isDebugMode && !isUser && processedData) {
+            // Tambahkan detail NLP dalam collapsed section
+            const nlpDetails = document.createElement('div');
+            nlpDetails.className = 'nlp-details';
+            
+            // Buat tombol untuk expand/collapse
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'nlp-toggle';
+            toggleBtn.textContent = 'Show NLP Details';
+            toggleBtn.addEventListener('click', function() {
+                const details = this.nextElementSibling;
+                if (details.style.display === 'none' || !details.style.display) {
+                    details.style.display = 'block';
+                    this.textContent = 'Hide NLP Details';
+                } else {
+                    details.style.display = 'none';
+                    this.textContent = 'Show NLP Details';
+                }
+            });
+            
+            // Detail NLP
+            const detailsContent = document.createElement('div');
+            detailsContent.className = 'nlp-details-content';
+            detailsContent.style.display = 'none';
+            
+            // Format sentiment
+            if (processedData.sentiment) {
+                const sentimentDiv = document.createElement('div');
+                sentimentDiv.className = `sentiment ${processedData.sentiment.sentiment || 'neutral'}`;
+                sentimentDiv.textContent = `Sentiment: ${processedData.sentiment.sentiment || 'neutral'} (${processedData.sentiment.score?.toFixed(2) || 'N/A'})`;
+                detailsContent.appendChild(sentimentDiv);
+            }
+            
+            // Format keywords
+            if (processedData.keywords && processedData.keywords.length) {
+                const keywordsDiv = document.createElement('div');
+                keywordsDiv.className = 'keywords';
+                keywordsDiv.textContent = `Keywords: ${processedData.keywords.join(', ')}`;
+                detailsContent.appendChild(keywordsDiv);
+            }
+            
+            // Format entities if any
+            if (processedData.entities && Object.keys(processedData.entities).length) {
+                const entitiesDiv = document.createElement('div');
+                entitiesDiv.className = 'entities';
+                entitiesDiv.textContent = 'Entities: ';
+                
+                for (const [type, entities] of Object.entries(processedData.entities)) {
+                    const entitySpan = document.createElement('span');
+                    entitySpan.className = 'entity';
+                    entitySpan.textContent = `${type}: ${entities.join(', ')}`;
+                    entitiesDiv.appendChild(entitySpan);
+                    entitiesDiv.appendChild(document.createElement('br'));
+                }
+                
+                detailsContent.appendChild(entitiesDiv);
+            }
+            
+            nlpDetails.appendChild(toggleBtn);
+            nlpDetails.appendChild(detailsContent);
+            messageDiv.appendChild(nlpDetails);
+        }
+        
         chatMessages.appendChild(messageDiv);
         
         // Auto scroll ke pesan terbaru
