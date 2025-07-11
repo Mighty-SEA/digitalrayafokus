@@ -66,6 +66,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Resources\LayananResource::class,
                 
                 // Menu Content
+                \App\Filament\Resources\BlogResource::class,
                 \App\Filament\Resources\PortfolioResource::class,
                 
                 // Menu Chatbot
@@ -78,6 +79,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->navigationGroups([
                 'Invoices',
+                'Content',
                 'Master Data',
                 'Chatbot Management',
                 'User Management',

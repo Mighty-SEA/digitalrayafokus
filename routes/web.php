@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\LayananController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\BlogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -69,6 +70,12 @@ Route::get('/layanan/{slug}', [LayananController::class, 'show'])->name('layanan
 
 Route::get('/portofolio', [PortfolioController::class, 'index'])->name('portofolio');
 Route::get('/portofolio/{id}', [PortfolioController::class, 'show'])->name('portfolio.show');
+
+// Blog Routes
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
+Route::get('/blog/category/{category}', [BlogController::class, 'byCategory'])->name('blog.category');
+Route::get('/blog/tag/{tag}', [BlogController::class, 'byTag'])->name('blog.tag');
 
 // Chatbot Routes
 Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot.index');

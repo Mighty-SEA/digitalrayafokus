@@ -72,6 +72,7 @@ $layanans = Layanan::where('is_active', true)
                         @endforeach
                     </ul>
                 </li>
+                <li><a href="{{ url('/blog') }}" class="font-semibold nav-link hover:text-yellow-400 transition-colors duration-200 py-2">Blog</a></li>
                 <li><a href="{{ url('/contact') }}" class="font-semibold nav-link hover:text-yellow-400 transition-colors duration-200 py-2">{{ $settings['pt5'] ?? 'Contact' }}</a></li>
             </ul>
 
@@ -148,6 +149,11 @@ $layanans = Layanan::where('is_active', true)
                                 @endforeach
                             </div>
                         </div>
+
+                        <a href="{{ url('/blog') }}" class="flex items-center px-5 py-4 text-base md:text-lg font-medium {{ request()->is('blog*') ? 'text-yellow-400 bg-gray-100' : 'text-gray-900' }} hover:bg-gray-100 transition-colors duration-200">
+                            <i class="fas fa-newspaper w-5 h-5 md:w-6 md:h-6 mr-3 {{ request()->is('blog*') ? 'text-yellow-400' : 'text-gray-400' }}"></i>
+                            Blog
+                        </a>
 
                         <a href="{{ url('/contact') }}" class="flex items-center px-5 py-4 text-base md:text-lg font-medium {{ request()->is('contact') ? 'text-yellow-400 bg-gray-100' : 'text-gray-900' }} hover:bg-gray-100 transition-colors duration-200">
                             <i class="fas fa-envelope w-5 h-5 md:w-6 md:h-6 mr-3 {{ request()->is('contact') ? 'text-yellow-400' : 'text-gray-400' }}"></i>
